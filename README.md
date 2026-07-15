@@ -1,5 +1,3 @@
-[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/freestylefly-wesight-badge.png)](https://mseep.ai/app/freestylefly-wesight)
-
 # WeSight
 
 <p align="center">
