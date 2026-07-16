@@ -19,17 +19,16 @@ import { ActiveSkillBadge,SkillsButton } from '../skills';
 import ClaudePermissionModeSelector from './ClaudePermissionModeSelector';
 import CoworkEngineSelector from './CoworkEngineSelector';
 import CoworkModelSelector from './CoworkModelSelector';
+import {
+  type CoworkSlashCommandEntry,
+  getCoworkSlashCommandsForEngine,
+} from './coworkSlashCommands';
 import FolderSelectorPopover from './FolderSelectorPopover';
 import KimiPermissionModeSelector from './KimiPermissionModeSelector';
 
 // CoworkAttachment is aliased from the Redux-persisted DraftAttachment type
 // so that attachment state survives view switches (cowork ↔ skills, etc.)
 type CoworkAttachment = DraftAttachment;
-
-interface SlashCommandEntry {
-  command: string;
-  descriptionKey: string;
-}
 
 interface SlashTrigger {
   start: number;
@@ -46,36 +45,6 @@ export type CoworkSlashCommandHandler = (
   command: string,
   args: string,
 ) => boolean | void | Promise<boolean | void>;
-
-const SUPPORTED_COWORK_SLASH_COMMANDS: SlashCommandEntry[] = [
-  { command: '/model', descriptionKey: 'coworkSlashCommandModel' },
-  { command: '/context', descriptionKey: 'coworkSlashCommandContext' },
-  { command: '/status', descriptionKey: 'coworkSlashCommandStatus' },
-  { command: '/help', descriptionKey: 'coworkSlashCommandHelp' },
-  { command: '/clear', descriptionKey: 'coworkSlashCommandClear' },
-  { command: '/new', descriptionKey: 'coworkSlashCommandNew' },
-  { command: '/config', descriptionKey: 'coworkSlashCommandConfig' },
-  { command: '/permissions', descriptionKey: 'coworkSlashCommandPermissions' },
-  { command: '/mcp', descriptionKey: 'coworkSlashCommandMcp' },
-  { command: '/agents', descriptionKey: 'coworkSlashCommandAgents' },
-  { command: '/skills', descriptionKey: 'coworkSlashCommandSkills' },
-  { command: '/memory', descriptionKey: 'coworkSlashCommandMemory' },
-];
-
-const getSlashCommandsForEngine = (engine: CoworkAgentEngine | undefined): SlashCommandEntry[] => {
-  if (
-    engine === CoworkAgentEngine.ClaudeCode
-    || engine === CoworkAgentEngine.Codex
-    || engine === CoworkAgentEngine.CodexApp
-    || engine === CoworkAgentEngine.GrokBuild
-    || engine === CoworkAgentEngine.QwenCode
-    || engine === CoworkAgentEngine.DeepSeekTui
-    || engine === CoworkAgentEngine.KimiCode
-  ) {
-    return SUPPORTED_COWORK_SLASH_COMMANDS;
-  }
-  return SUPPORTED_COWORK_SLASH_COMMANDS;
-};
 
 const getSlashTrigger = (text: string, caretIndex: number): SlashTrigger | null => {
   const boundedCaretIndex = Math.max(0, Math.min(caretIndex, text.length));
@@ -335,7 +304,7 @@ const CoworkPromptInput = React.forwardRef<CoworkPromptInputRef, CoworkPromptInp
     setCaretIndex(draftPrompt.length);
   }, [draftKey]); // intentionally omit draftPrompt to only trigger on session switch
 
-  const slashCommands = useMemo(() => getSlashCommandsForEngine(agentEngine), [agentEngine]);
+  const slashCommands = useMemo(() => getCoworkSlashCommandsForEngine(agentEngine), [agentEngine]);
   const slashTrigger = useMemo(() => getSlashTrigger(value, caretIndex), [value, caretIndex]);
   const slashTriggerKey = slashTrigger
     ? `${slashTrigger.start}:${slashTrigger.end}:${slashTrigger.query}`
@@ -477,7 +446,7 @@ const CoworkPromptInput = React.forwardRef<CoworkPromptInputRef, CoworkPromptInp
     setCaretIndex(event.currentTarget.selectionStart ?? event.currentTarget.value.length);
   }, []);
 
-  const insertSlashCommand = useCallback((entry: SlashCommandEntry) => {
+  const insertSlashCommand = useCallback((entry: CoworkSlashCommandEntry) => {
     if (!slashTrigger) return;
     const insertText = `${entry.command} `;
     const nextValue = `${value.slice(0, slashTrigger.start)}${insertText}${value.slice(slashTrigger.end)}`;

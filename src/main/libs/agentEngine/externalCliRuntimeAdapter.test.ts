@@ -837,3 +837,98 @@ describe('ExternalCliRuntimeAdapter Codex local config', () => {
     }
   });
 });
+
+describe('ExternalCliRuntimeAdapter Claude Code slash commands', () => {
+  test('passes native slash commands through without prompt wrapping', () => {
+    const { store } = createStore();
+    const adapter = new ExternalCliRuntimeAdapter({
+      engine: CoworkAgentEngine.ClaudeCode,
+      store,
+    });
+    const internals = adapter as unknown as {
+      resolveEffectivePrompt: (
+        sessionId: string,
+        prompt: string,
+        systemPrompt: string,
+        permissionMode: string,
+        cliSessionId: string | null,
+      ) => string;
+    };
+
+    expect(internals.resolveEffectivePrompt(
+      'session-1',
+      '/goal finish when tests pass',
+      'custom instructions',
+      'bypassPermissions',
+      'claude-session-1',
+    )).toBe('/goal finish when tests pass');
+  });
+
+  test('resumes the Claude Code session and keeps the current prompt concise', () => {
+    const { store } = createStore();
+    const adapter = new ExternalCliRuntimeAdapter({
+      engine: CoworkAgentEngine.ClaudeCode,
+      store,
+    });
+    const internals = adapter as unknown as {
+      buildCommandArgs: (
+        cwd: string,
+        prompt: string,
+        imagePaths: string[],
+        selectedProvider: ExternalAgentProvider | null,
+        sessionTitle: string,
+        cliSessionId: string | null,
+      ) => string[];
+      resolveEffectivePrompt: (
+        sessionId: string,
+        prompt: string,
+        systemPrompt: string,
+        permissionMode: string,
+        cliSessionId: string | null,
+      ) => string;
+    };
+
+    const prompt = internals.resolveEffectivePrompt(
+      'session-1',
+      'continue the implementation',
+      'custom instructions',
+      'bypassPermissions',
+      'claude-session-1',
+    );
+    const args = internals.buildCommandArgs(
+      '/tmp/project',
+      prompt,
+      [],
+      null,
+      'session',
+      'claude-session-1',
+    );
+
+    expect(prompt).toBe('continue the implementation');
+    expect(args).toContain('--resume');
+    expect(args).toContain('claude-session-1');
+    expect(args.at(-1)).toBe('continue the implementation');
+  });
+
+  test('retries with a fresh Claude Code session when resume state is missing', () => {
+    const { store } = createStore();
+    const adapter = new ExternalCliRuntimeAdapter({
+      engine: CoworkAgentEngine.ClaudeCode,
+      store,
+    });
+    const active = {
+      cliSessionId: 'claude-session-1',
+      assistantContent: '',
+      stderrTail: 'Error: Failed to resume conversation: session not found',
+    };
+    const internals = adapter as unknown as {
+      shouldRetryClaudeWithoutResume: (active: typeof active, code: number | null) => boolean;
+    };
+
+    expect(internals.shouldRetryClaudeWithoutResume(active, 1)).toBe(true);
+    expect(internals.shouldRetryClaudeWithoutResume({
+      ...active,
+      assistantContent: 'partial answer',
+    }, 1)).toBe(false);
+  });
+});

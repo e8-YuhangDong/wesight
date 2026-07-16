@@ -2,6 +2,7 @@ import { ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { AgentRunTargetType, CoworkAgentEngine, DefaultAgent, ExternalAgentConfigSource } from '@shared/cowork/constants';
 import type { CoworkModelOverride } from '@shared/cowork/runtimeSnapshot';
 import { buildFallbackSessionTitle } from '@shared/cowork/sessionTitle';
+import { CoworkGraphicalSlashCommand } from '@shared/cowork/slashCommands';
 import React, { useEffect, useRef,useState } from 'react';
 import { useDispatch,useSelector } from 'react-redux';
 
@@ -24,6 +25,7 @@ import type { SettingsOpenOptions } from '../Settings';
 import WindowTitleBar from '../window/WindowTitleBar';
 import CoworkPromptInput, { type CoworkPromptInputRef, type CoworkSlashCommandHandler } from './CoworkPromptInput';
 import CoworkSessionDetail from './CoworkSessionDetail';
+import { getCoworkSlashCommandsForEngine } from './coworkSlashCommands';
 
 export interface CoworkViewProps {
   onRequestAppSettings?: (options?: SettingsOpenOptions) => void;
@@ -37,21 +39,6 @@ export interface CoworkViewProps {
 }
 
 type SlashPanelKind = 'context' | 'status' | 'help';
-
-const COWORK_SLASH_PANEL_COMMANDS = [
-  { command: '/model', descriptionKey: 'coworkSlashCommandModel' },
-  { command: '/context', descriptionKey: 'coworkSlashCommandContext' },
-  { command: '/status', descriptionKey: 'coworkSlashCommandStatus' },
-  { command: '/help', descriptionKey: 'coworkSlashCommandHelp' },
-  { command: '/clear', descriptionKey: 'coworkSlashCommandClear' },
-  { command: '/new', descriptionKey: 'coworkSlashCommandNew' },
-  { command: '/config', descriptionKey: 'coworkSlashCommandConfig' },
-  { command: '/permissions', descriptionKey: 'coworkSlashCommandPermissions' },
-  { command: '/mcp', descriptionKey: 'coworkSlashCommandMcp' },
-  { command: '/agents', descriptionKey: 'coworkSlashCommandAgents' },
-  { command: '/skills', descriptionKey: 'coworkSlashCommandSkills' },
-  { command: '/memory', descriptionKey: 'coworkSlashCommandMemory' },
-] as const;
 
 const usesLocalCliModelConfigForEngine = (
   config: RootState['cowork']['config'],
@@ -712,41 +699,44 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
   const handleSlashCommand: CoworkSlashCommandHandler = async (command) => {
     const normalizedCommand = command.toLowerCase();
     switch (normalizedCommand) {
-      case '/model':
+      case CoworkGraphicalSlashCommand.Model:
         openModelSelector();
         return true;
-      case '/context':
+      case CoworkGraphicalSlashCommand.Context:
         openSlashPanel('context');
         return true;
-      case '/status':
+      case CoworkGraphicalSlashCommand.Status:
         openSlashPanel('status');
         return true;
-      case '/help':
+      case CoworkGraphicalSlashCommand.Help:
         openSlashPanel('help');
         return true;
-      case '/clear':
-      case '/new':
+      case CoworkGraphicalSlashCommand.Clear:
+      case CoworkGraphicalSlashCommand.New:
         startFreshChatFromSlash();
         showSlashToast(i18nService.t('coworkSlashCommandNewChat'));
         return true;
-      case '/mcp':
+      case CoworkGraphicalSlashCommand.Mcp:
         onShowMcp?.();
         return true;
-      case '/agent':
-      case '/agents':
+      case CoworkGraphicalSlashCommand.Agent:
+      case CoworkGraphicalSlashCommand.Agents:
         onShowAgents?.();
         return true;
-      case '/skills':
+      case CoworkGraphicalSlashCommand.Skills:
         onShowSkills?.();
         return true;
-      case '/memory':
+      case CoworkGraphicalSlashCommand.Memory:
         onRequestAppSettings?.({ initialTab: 'coworkMemory' });
         return true;
-      case '/config':
-      case '/permissions':
+      case CoworkGraphicalSlashCommand.Config:
+      case CoworkGraphicalSlashCommand.Permissions:
         onRequestAppSettings?.({ initialTab: 'coworkAgentEngine' });
         return true;
       default:
+        if (selectedRuntimeEngine === CoworkAgentEngine.ClaudeCode) {
+          return false;
+        }
         openSlashPanel('help', normalizedCommand);
         return true;
     }
@@ -872,7 +862,11 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
               {i18nService.t(titleKey)}
             </div>
             <div className="mt-1 text-xs text-secondary">
-              {i18nService.t('coworkSlashPanelSubtitle')}
+              {i18nService.t(
+                selectedRuntimeEngine === CoworkAgentEngine.ClaudeCode
+                  ? 'coworkSlashPanelClaudeCodeSubtitle'
+                  : 'coworkSlashPanelSubtitle'
+              )}
             </div>
           </div>
           <button
@@ -895,7 +889,7 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
 
           {slashPanelKind === 'help' ? (
             <div className="space-y-2">
-              {COWORK_SLASH_PANEL_COMMANDS.map((entry) => (
+              {getCoworkSlashCommandsForEngine(selectedRuntimeEngine).map((entry) => (
                 <div key={entry.command} className="flex items-center gap-3 rounded-lg border border-border bg-background px-3 py-2">
                   <span className="w-28 shrink-0 font-mono text-sm text-primary">
                     {entry.command}

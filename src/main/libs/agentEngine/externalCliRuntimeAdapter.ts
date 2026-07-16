@@ -18,6 +18,7 @@ import {
   QwenCodePermissionMode,
 } from '../../../shared/cowork/constants';
 import type { CoworkSessionRuntimeSnapshot } from '../../../shared/cowork/runtimeSnapshot';
+import { isClaudeCodeSlashInput } from '../../../shared/cowork/slashCommands';
 import type {
   CoworkMessage,
   CoworkMessageMetadata,
@@ -503,7 +504,14 @@ export class ExternalCliRuntimeAdapter extends EventEmitter implements CoworkRun
     }
     const systemPrompt = options.systemPrompt ?? currentSession?.systemPrompt ?? '';
     const claudeCodePermissionMode = this.resolveClaudeCodePermissionMode(options.runtimeSnapshot);
-    const effectivePrompt = this.buildEffectivePrompt(sessionId, prompt, systemPrompt, claudeCodePermissionMode);
+    const cliSessionId = currentSession?.claudeSessionId ?? null;
+    const effectivePrompt = this.resolveEffectivePrompt(
+      sessionId,
+      prompt,
+      systemPrompt,
+      claudeCodePermissionMode,
+      cliSessionId,
+    );
     const imagePaths = this.materializeImageAttachments(sessionId, options.imageAttachments);
     const apiConfigOverride = getApiOverrideFromRuntimeSnapshot(options.runtimeSnapshot);
     const env = await getEnhancedEnvWithTmpdir(cwd, 'local', {
@@ -577,7 +585,7 @@ export class ExternalCliRuntimeAdapter extends EventEmitter implements CoworkRun
       imagePaths,
       selectedProvider,
       currentSession?.title ?? session.title,
-      currentSession?.claudeSessionId ?? null,
+      cliSessionId,
       apiConfigOverride,
       claudeCodePermissionMode,
     );
@@ -813,6 +821,17 @@ export class ExternalCliRuntimeAdapter extends EventEmitter implements CoworkRun
           return;
         }
 
+        if (this.shouldRetryClaudeWithoutResume(active, code)) {
+          console.warn('[ExternalCliRuntimeAdapter] Claude Code resume failed; retrying with a fresh session.');
+          this.store.updateSession(sessionId, {
+            status: 'running',
+            claudeSessionId: null,
+          });
+          await this.runTurn(sessionId, prompt, options, false);
+          resolve();
+          return;
+        }
+
         const detail = [
           `${this.getEngineDisplayName()} exited with code ${code ?? 'unknown'}${signal ? ` (${signal})` : ''}.`,
           active.cliErrorMessage ? `CLI error:\n${active.cliErrorMessage}` : '',
@@ -834,6 +853,22 @@ export class ExternalCliRuntimeAdapter extends EventEmitter implements CoworkRun
       && (
         stderr.includes('no rollout found')
         || stderr.includes('thread/resume failed')
+      );
+  }
+
+  private shouldRetryClaudeWithoutResume(active: ActiveCliSession, code: number | null): boolean {
+    if (this.engine !== CoworkAgentEngine.ClaudeCode) return false;
+    if (code === 0 || !active.cliSessionId || active.assistantContent.trim()) return false;
+    const stderr = active.stderrTail.toLowerCase();
+    return stderr.includes('resume')
+      && (
+        stderr.includes('session')
+        || stderr.includes('conversation')
+      )
+      && (
+        stderr.includes('not found')
+        || stderr.includes('failed')
+        || stderr.includes('invalid')
       );
   }
 
@@ -1377,6 +1412,9 @@ export class ExternalCliRuntimeAdapter extends EventEmitter implements CoworkRun
         '--permission-mode',
         claudeCodePermissionMode,
       ];
+      if (cliSessionId) {
+        args.push('--resume', cliSessionId);
+      }
       args.push(prompt);
       return args;
     }
@@ -2100,6 +2138,24 @@ export class ExternalCliRuntimeAdapter extends EventEmitter implements CoworkRun
       history,
       `Current user request:\n${prompt}`,
     ].filter(Boolean).join('\n\n---\n\n');
+  }
+
+  private resolveEffectivePrompt(
+    sessionId: string,
+    prompt: string,
+    systemPrompt: string,
+    claudeCodePermissionMode: ClaudeCodePermissionMode,
+    cliSessionId: string | null,
+  ): string {
+    if (this.engine === CoworkAgentEngine.ClaudeCode) {
+      if (isClaudeCodeSlashInput(prompt)) {
+        return prompt.trim();
+      }
+      if (cliSessionId) {
+        return prompt;
+      }
+    }
+    return this.buildEffectivePrompt(sessionId, prompt, systemPrompt, claudeCodePermissionMode);
   }
 
   private buildHistoryContext(sessionId: string, prompt: string): string {
