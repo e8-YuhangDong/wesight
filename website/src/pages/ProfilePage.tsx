@@ -1,10 +1,11 @@
-import { ArrowLeft, Download, Laptop, Mail, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, Laptop, Mail, ShieldCheck } from 'lucide-react';
 import { Link } from 'wouter';
 
+import { DownloadMenu } from '../components/DownloadMenu';
 import { PageMeta } from '../components/PageMeta';
 import { RoutePage } from '../components/RoutePage';
 import { routeCopy } from '../content/routeCopy';
-import { type Language, releaseUrl } from '../content/siteCopy';
+import { copy, type Language } from '../content/siteCopy';
 
 type ProfilePageProps = {
   language: Language;
@@ -26,10 +27,11 @@ export function ProfilePage({ language, onToggleLanguage }: ProfilePageProps) {
         <h1>{t.profile.title}</h1>
         <p>{t.profile.body}</p>
         <div className="route-actions">
-          <a className="primary-button" href={releaseUrl}>
-            <Download size={18} />
-            {t.common.download}
-          </a>
+          <DownloadMenu
+            buttonClassName="primary-button"
+            copy={copy[language].downloadMenu}
+            label={t.common.download}
+          />
           <a className="secondary-button" href="mailto:hello@wesight.ai">
             <Mail size={18} />
             {t.common.contact}

@@ -14,7 +14,7 @@ export function RoutePage({ children, language, onToggleLanguage }: RoutePagePro
 
   return (
     <div className="site-shell route-shell">
-      <Header t={t} language={language} onToggleLanguage={onToggleLanguage} />
+      <Header t={t} onToggleLanguage={onToggleLanguage} />
       <main className="route-page">{children}</main>
       <div className="route-footer">
         <SiteFooter t={t} />

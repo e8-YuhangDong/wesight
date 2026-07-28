@@ -43,7 +43,7 @@ export function HomePage({ language, onToggleLanguage }: HomePageProps) {
   return (
     <div className="site-shell">
       <PageMeta htmlLang={t.htmlLang} title={t.metaTitle} description={t.metaDescription} />
-      <Header t={t} language={language} onToggleLanguage={onToggleLanguage} />
+      <Header t={t} onToggleLanguage={onToggleLanguage} />
       <main>
         <Hero t={t} />
         <ProductStage t={t} stageNotes={localized.stageNotes} />

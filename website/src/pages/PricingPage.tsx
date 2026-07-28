@@ -1,10 +1,11 @@
-import { ArrowLeft, Download, KeyRound, Mail, Sparkles } from 'lucide-react';
+import { ArrowLeft, KeyRound, Mail, Sparkles } from 'lucide-react';
 import { Link } from 'wouter';
 
+import { DownloadMenu } from '../components/DownloadMenu';
 import { PageMeta } from '../components/PageMeta';
 import { RoutePage } from '../components/RoutePage';
 import { routeCopy } from '../content/routeCopy';
-import { type Language, releaseUrl } from '../content/siteCopy';
+import { copy, type Language } from '../content/siteCopy';
 
 type PricingPageProps = {
   language: Language;
@@ -30,10 +31,11 @@ export function PricingPage({ language, onToggleLanguage }: PricingPageProps) {
           {t.pricing.status}
         </span>
         <div className="route-actions">
-          <a className="primary-button" href={releaseUrl}>
-            <Download size={18} />
-            {t.common.download}
-          </a>
+          <DownloadMenu
+            buttonClassName="primary-button"
+            copy={copy[language].downloadMenu}
+            label={t.common.download}
+          />
           <a className="secondary-button" href="mailto:hello@wesight.ai">
             <Mail size={18} />
             {t.common.contact}
