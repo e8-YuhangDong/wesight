@@ -6,6 +6,8 @@ export const ocean: ThemeDefinition = {
     id: 'ocean',
     name: '深海蓝黑',
     description: '深海般沉稳的蓝黑暗色主题',
+    nameKey: 'themeNameOcean',
+    descriptionKey: 'themeDescriptionOcean',
     appearance: 'dark',
     preview: ['#0c1222', '#0ea5e9', '#38bdf8', '#2dd4bf'],
   },

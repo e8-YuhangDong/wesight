@@ -6,6 +6,8 @@ export const mocha: ThemeDefinition = {
     id: 'mocha',
     name: '摩卡棕黑',
     description: '醇厚温暖的咖啡色暗色主题',
+    nameKey: 'themeNameMocha',
+    descriptionKey: 'themeDescriptionMocha',
     appearance: 'dark',
     preview: ['#1a1210', '#d97706', '#f59e0b', '#a78bfa'],
   },

@@ -1,7 +1,6 @@
 const { notarize } = require('@electron/notarize');
 const path = require('path');
 
-// 加载 .env 文件
 require('dotenv').config();
 
 exports.default = async function notarizing(context) {
@@ -11,41 +10,38 @@ exports.default = async function notarizing(context) {
     return;
   }
 
-  if (!process.env.APPLE_ID || !process.env.APPLE_APP_SPECIFIC_PASSWORD) {
-    console.warn('⚠️  跳过公证: 未设置 APPLE_ID 或 APPLE_APP_SPECIFIC_PASSWORD');
-    console.warn('   如需启用公证，请创建 .env 文件并配置 Apple Developer 凭据');
-    console.warn('   参考 .env.example 模板');
-    return;
-  }
+  const appleId = process.env.APPLE_ID?.trim();
+  const appleIdPassword = (
+    process.env.APPLE_APP_SPECIFIC_PASSWORD || process.env.APPLE_APP_PWD
+  )?.trim();
+  const teamId = process.env.APPLE_TEAM_ID?.trim();
 
-  if (!process.env.APPLE_TEAM_ID) {
-    console.warn('⚠️  跳过公证: 未设置 APPLE_TEAM_ID');
-    console.warn('   公证需要 APPLE_TEAM_ID');
+  if (!appleId || !appleIdPassword || !teamId) {
+    const message = '[MacNotarize] Apple notarization credentials are incomplete.';
+    if (process.env.WESIGHT_REQUIRE_APPLE_NOTARIZATION === 'true') {
+      throw new Error(message);
+    }
+    console.warn(`${message} Skipping app notarization.`);
     return;
   }
 
   const appName = context.packager.appInfo.productFilename;
   const appPath = path.join(appOutDir, `${appName}.app`);
 
-  console.log(`🔐 正在公证 ${appName}...`);
-  console.log(`   应用路径: ${appPath}`);
-  console.log(`   Apple ID: ${process.env.APPLE_ID}`);
-  console.log(`   Team ID: ${process.env.APPLE_TEAM_ID}`);
+  console.log(`[MacNotarize] Submitting ${appName} for notarization.`);
 
   try {
     await notarize({
-      appPath: appPath,
-      appleId: process.env.APPLE_ID,
-      appleIdPassword: process.env.APPLE_APP_SPECIFIC_PASSWORD,
-      teamId: process.env.APPLE_TEAM_ID,
+      tool: 'notarytool',
+      appPath,
+      appleId,
+      appleIdPassword,
+      teamId,
     });
 
-    console.log('✅ 公证成功！');
-    console.log('   应用已签名并通过公证，可以分发给用户');
+    console.log(`[MacNotarize] Notarized and stapled ${appName}.`);
   } catch (error) {
-    console.error('❌ 公证失败:', error.message);
-    console.error('   请检查 Apple Developer 凭据并重试');
-    console.error('   访问 https://appstoreconnect.apple.com/notarization-history 查看详情');
+    console.error(`[MacNotarize] Failed to notarize ${appName}:`, error);
     throw error;
   }
 };

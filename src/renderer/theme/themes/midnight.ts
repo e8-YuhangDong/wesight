@@ -6,6 +6,8 @@ export const midnight: ThemeDefinition = {
     id: 'midnight',
     name: '午夜深蓝',
     description: '深邃冷调的默认暗色主题',
+    nameKey: 'themeNameMidnight',
+    descriptionKey: 'themeDescriptionMidnight',
     appearance: 'dark',
     preview: ['#0f172a', '#FFD700', '#FFDF33', '#14b8a6'],
   },

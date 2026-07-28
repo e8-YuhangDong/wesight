@@ -6,6 +6,8 @@ export const classicDark: ThemeDefinition = {
     id: 'classic-dark',
     name: '经典深色',
     description: '原生默认深色主题，纯净近黑',
+    nameKey: 'themeNameClassicDark',
+    descriptionKey: 'themeDescriptionClassicDark',
     appearance: 'dark',
     preview: ['#0F1117', '#FFD700', '#FFDF33', '#8B8FA3'],
   },

@@ -6,6 +6,8 @@ export const nord: ThemeDefinition = {
     id: 'nord',
     name: 'Nord 极光',
     description: '受 Nord 配色启发的极光暗色主题',
+    nameKey: 'themeNameNord',
+    descriptionKey: 'themeDescriptionNord',
     appearance: 'dark',
     preview: ['#2e3440', '#88c0d0', '#81a1c1', '#5e81ac'],
   },

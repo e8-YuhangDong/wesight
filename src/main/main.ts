@@ -68,6 +68,7 @@ import {
 } from '../shared/pet/constants';
 import { PlatformRegistry } from '../shared/platform';
 import { SkillsIpcChannel } from '../shared/skills/constants';
+import { ThemeSkinIpcChannel } from '../shared/theme/constants';
 import { AgentManager } from './agentManager';
 import { AgentTeamRunner } from './agentTeamRunner';
 import { APP_NAME } from './appConstants';
@@ -214,6 +215,7 @@ import {
   restoreOriginalProxyEnv,
   setSystemProxyEnabled,
 } from './libs/systemProxy';
+import { ThemeSkinAssetStore } from './libs/themeSkinAssets';
 import { getLogFilePath, getRecentMainLogEntries,initLogger } from './logger';
 import { type McpServerFormData,McpStore } from './mcpStore';
 import { RuntimeTelemetryStore } from './runtimeTelemetryStore';
@@ -3592,9 +3594,14 @@ if (!gotTheLock) {
     return getStore().get(key);
   });
 
-  ipcMain.handle('store:set', async (_event, key, value) => {
+  ipcMain.handle('store:set', async (
+    _event,
+    key,
+    value,
+    options?: { syncRuntimeConfig?: boolean },
+  ) => {
     getStore().set(key, value);
-    if (key === 'app_config') {
+    if (key === 'app_config' && options?.syncRuntimeConfig !== false) {
       refreshEndpointsTestMode(getStore());
       const syncResult = await syncOpenClawConfig({
         reason: 'app-config-change',
@@ -3609,6 +3616,14 @@ if (!gotTheLock) {
   ipcMain.handle('store:remove', (_event, key) => {
     getStore().delete(key);
   });
+
+  const themeSkinAssetStore = new ThemeSkinAssetStore(app.getPath('userData'));
+  ipcMain.handle(ThemeSkinIpcChannel.ImportAsset, (_event, sourcePath: unknown) =>
+    themeSkinAssetStore.importAsset(sourcePath));
+  ipcMain.handle(ThemeSkinIpcChannel.ResolveAsset, (_event, assetId: unknown) =>
+    themeSkinAssetStore.resolveAsset(assetId));
+  ipcMain.handle(ThemeSkinIpcChannel.PruneAssets, (_event, keepAssetIds: unknown) =>
+    themeSkinAssetStore.pruneAssets(keepAssetIds));
 
   ipcMain.handle('enterprise:getConfig', async () => {
     try {

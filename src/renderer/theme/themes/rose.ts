@@ -6,6 +6,8 @@ export const rose: ThemeDefinition = {
     id: 'rose',
     name: '玫瑰暗红',
     description: '温暖深沉的玫瑰红暗色主题',
+    nameKey: 'themeNameRose',
+    descriptionKey: 'themeDescriptionRose',
     appearance: 'dark',
     preview: ['#1a0a10', '#f43f5e', '#fb7185', '#f0abfc'],
   },

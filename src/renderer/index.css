@@ -96,6 +96,92 @@ body {
   height: 100vh;
 }
 
+/* Full-window theme skin layer */
+.theme-skin-shell {
+  position: relative;
+  isolation: isolate;
+}
+
+.theme-skin-backdrop {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.theme-skin-backdrop::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--theme-skin-image, none);
+  background-position:
+    var(--theme-skin-position-x, 50%)
+    var(--theme-skin-position-y, 50%);
+  background-repeat: no-repeat;
+  background-size: var(--theme-skin-size, cover);
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.theme-skin-backdrop::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgb(
+    var(--theme-skin-overlay-rgb, 255 255 255)
+    / var(--theme-skin-contrast-opacity, 0.5)
+  );
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+[data-theme-skin='on'] .theme-skin-backdrop::after {
+  opacity: 1;
+}
+
+[data-theme-skin='on'][data-skin-surface='home'] .theme-skin-backdrop::before {
+  opacity: var(--theme-skin-home-opacity, 0.45);
+}
+
+[data-theme-skin='on'][data-skin-surface='task'] .theme-skin-backdrop::before {
+  opacity: var(--theme-skin-task-opacity, 0.35);
+}
+
+[data-theme-skin='on'][data-skin-surface='utility'] .theme-skin-backdrop::before {
+  opacity: var(--theme-skin-utility-opacity, 0.15);
+}
+
+[data-theme-skin='on'] .theme-skin-shell {
+  background-color: var(--lobster-background);
+}
+
+[data-theme-skin='on'] .theme-skin-sidebar {
+  background-color: color-mix(in srgb, var(--lobster-surface-raised) 76%, transparent) !important;
+  backdrop-filter: blur(22px) saturate(1.08);
+}
+
+[data-theme-skin='on'] .theme-skin-main-surface {
+  background-color: color-mix(in srgb, var(--lobster-background) 18%, transparent) !important;
+}
+
+[data-theme-skin='on'][data-skin-surface='task'] .theme-skin-main-surface {
+  background-color: color-mix(in srgb, var(--lobster-background) 68%, transparent) !important;
+  backdrop-filter: blur(8px);
+}
+
+[data-theme-skin='on'][data-skin-surface='utility'] .theme-skin-main-surface {
+  background-color: color-mix(in srgb, var(--lobster-background) 88%, transparent) !important;
+  backdrop-filter: blur(12px);
+}
+
+[data-theme-skin='on'] .theme-skin-home {
+  background-color: transparent !important;
+}
+
+[data-theme-skin='on'] .theme-skin-task {
+  background-color: color-mix(in srgb, var(--lobster-background) 72%, transparent) !important;
+}
+
 /* Custom scrollbar styles - cold modern */
 ::-webkit-scrollbar {
   width: 6px;

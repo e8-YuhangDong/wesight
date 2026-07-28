@@ -1,6 +1,7 @@
 import { normalizePetConfig } from '@shared/pet/constants';
 
 import { AppConfig, CONFIG_KEYS, defaultConfig, isCustomProvider } from '../config';
+import { normalizeThemeSkinState } from '../theme/skin/config';
 import { localStore } from './store';
 
 const getFixedProviderApiFormat = (providerKey: string): 'anthropic' | 'openai' | 'gemini' | null => {
@@ -248,6 +249,15 @@ class ConfigService {
           );
         }
 
+        const legacyThemeId = typeof localStorage !== 'undefined'
+          ? localStorage.getItem('lobster-theme-id')
+          : null;
+        const themeSkin = normalizeThemeSkinState(
+          storedConfig.themeSkin,
+          storedConfig.theme,
+          legacyThemeId,
+        );
+
         this.config = migrateCustomProviders({
           ...defaultConfig,
           ...storedConfig,
@@ -266,7 +276,20 @@ class ConfigService {
             ...(storedConfig.shortcuts ?? {}),
           } as AppConfig['shortcuts'],
           providers: mergedProviders as AppConfig['providers'],
+          theme: themeSkin.active.appearanceMode,
+          themeSkin,
         });
+
+        const storedThemeSkin = storedConfig.themeSkin;
+        const needsThemeSkinMigration = !storedThemeSkin
+          || storedThemeSkin.schemaVersion !== 1
+          || legacyThemeId !== null;
+        if (needsThemeSkinMigration) {
+          await localStore.setItem(CONFIG_KEYS.APP_CONFIG, this.config);
+          if (typeof localStorage !== 'undefined') {
+            localStorage.removeItem('lobster-theme-id');
+          }
+        }
       }
     } catch (error) {
       console.error('Failed to load config:', error);
@@ -277,16 +300,26 @@ class ConfigService {
     return this.config;
   }
 
-  async updateConfig(newConfig: Partial<AppConfig>) {
+  async updateConfig(
+    newConfig: Partial<AppConfig>,
+    options?: { syncRuntimeConfig?: boolean },
+  ) {
     const normalizedProviders = normalizeProvidersConfig(newConfig.providers as AppConfig['providers'] | undefined);
     const normalizedPet = newConfig.pet ? normalizePetConfig(newConfig.pet) : undefined;
+    const themeSkin = normalizeThemeSkinState(
+      newConfig.themeSkin ?? this.config.themeSkin,
+      newConfig.theme ?? this.config.theme,
+      null,
+    );
     this.config = {
       ...this.config,
       ...newConfig,
       ...(normalizedProviders ? { providers: normalizedProviders } : {}),
       ...(normalizedPet ? { pet: normalizedPet } : {}),
+      theme: themeSkin.active.appearanceMode,
+      themeSkin,
     };
-    await localStore.setItem(CONFIG_KEYS.APP_CONFIG, this.config);
+    await localStore.setItem(CONFIG_KEYS.APP_CONFIG, this.config, options);
   }
 
   getApiConfig() {

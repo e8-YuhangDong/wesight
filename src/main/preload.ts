@@ -19,6 +19,11 @@ import {
 } from '../shared/pet/constants';
 import type { Platform } from '../shared/platform';
 import { SkillsIpcChannel } from '../shared/skills/constants';
+import {
+  type ThemeSkinAssetResult,
+  ThemeSkinIpcChannel,
+  type ThemeSkinPruneResult,
+} from '../shared/theme/constants';
 
 // 暴露安全的 API 到渲染进程
 contextBridge.exposeInMainWorld('electron', {
@@ -26,8 +31,20 @@ contextBridge.exposeInMainWorld('electron', {
   arch: process.arch,
   store: {
     get: (key: string) => ipcRenderer.invoke('store:get', key),
-    set: (key: string, value: any) => ipcRenderer.invoke('store:set', key, value),
+    set: (
+      key: string,
+      value: any,
+      options?: { syncRuntimeConfig?: boolean },
+    ) => ipcRenderer.invoke('store:set', key, value, options),
     remove: (key: string) => ipcRenderer.invoke('store:remove', key),
+  },
+  themeSkin: {
+    importAsset: (sourcePath: string): Promise<ThemeSkinAssetResult> =>
+      ipcRenderer.invoke(ThemeSkinIpcChannel.ImportAsset, sourcePath),
+    resolveAsset: (assetId: string): Promise<ThemeSkinAssetResult> =>
+      ipcRenderer.invoke(ThemeSkinIpcChannel.ResolveAsset, assetId),
+    pruneAssets: (keepAssetIds: string[]): Promise<ThemeSkinPruneResult> =>
+      ipcRenderer.invoke(ThemeSkinIpcChannel.PruneAssets, keepAssetIds),
   },
   skills: {
     list: () => ipcRenderer.invoke(SkillsIpcChannel.List),

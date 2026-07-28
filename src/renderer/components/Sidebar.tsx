@@ -156,7 +156,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <aside
-      className={`shrink-0 bg-surface-raised flex flex-col sidebar-transition overflow-hidden ${
+      className={`theme-skin-sidebar shrink-0 bg-surface-raised flex flex-col sidebar-transition overflow-hidden ${
         isCollapsed ? 'w-0' : 'w-60'
       }`}
     >

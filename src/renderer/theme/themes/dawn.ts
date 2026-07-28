@@ -6,6 +6,8 @@ export const dawn: ThemeDefinition = {
     id: 'dawn',
     name: '晨光蓝白',
     description: '明亮通透的蓝白色默认主题，清爽舒适',
+    nameKey: 'themeNameDawn',
+    descriptionKey: 'themeDescriptionDawn',
     appearance: 'light',
     preview: ['#f8fafc', '#FFD700', '#FFDF33', '#14b8a6'],
   },

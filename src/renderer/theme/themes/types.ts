@@ -4,6 +4,8 @@ export interface ThemeMeta {
   id: string;
   name: string;
   description: string;
+  nameKey: string;
+  descriptionKey: string;
   appearance: 'light' | 'dark';
   preview: string[];
 }

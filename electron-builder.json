@@ -39,6 +39,7 @@
     "!**/tsconfig.*.json",
     "!**/*.test.*",
     "!**/*.spec.*",
+    "!**/test_extension.node",
     "!**/tests/**",
     "!**/test/**",
     "!**/__tests__/**"
@@ -67,6 +68,7 @@
     "category": "public.app-category.productivity",
     "hardenedRuntime": true,
     "gatekeeperAssess": false,
+    "notarize": false,
     "entitlements": "build/entitlements.mac.plist",
     "entitlementsInherit": "build/entitlements.mac.plist",
     "extendInfo": {
@@ -104,6 +106,7 @@
           "!**/tsconfig.*.json",
           "!**/*.test.*",
           "!**/*.spec.*",
+          "!**/test_extension.node",
           "!**/tests/**",
           "!**/test/**",
           "!**/__tests__/**"
@@ -112,9 +115,11 @@
     ]
   },
   "dmg": {
-    "sign": false
+    "sign": true,
+    "writeUpdateInfo": false
   },
   "afterSign": "scripts/notarize.js",
+  "afterAllArtifactBuild": "scripts/notarize-dmg.cjs",
   "win": {
     "target": [
       "nsis"
@@ -169,6 +174,7 @@
           "!**/tsconfig.*.json",
           "!**/*.test.*",
           "!**/*.spec.*",
+          "!**/test_extension.node",
           "!**/tests/**",
           "!**/test/**",
           "!**/__tests__/**"

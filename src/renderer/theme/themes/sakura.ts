@@ -6,6 +6,8 @@ export const sakura: ThemeDefinition = {
     id: 'sakura',
     name: '樱花粉白',
     description: '柔和粉色主题，优雅浪漫',
+    nameKey: 'themeNameSakura',
+    descriptionKey: 'themeDescriptionSakura',
     appearance: 'light',
     preview: ['#fdf2f8', '#ec4899', '#f472b6', '#a855f7'],
   },

@@ -3214,7 +3214,7 @@ const CoworkSessionDetail: React.FC<CoworkSessionDetailProps> = ({
   };
 
   return (
-    <div ref={detailRootRef} className="flex-1 flex flex-col bg-background h-full">
+    <div ref={detailRootRef} className="theme-skin-task flex-1 flex flex-col bg-background h-full">
       {/* Header */}
       <div className="draggable flex h-12 items-center justify-between px-4 border-b border-border bg-surface shrink-0">
         {/* Left side: Toggle buttons (when collapsed) + Title */}

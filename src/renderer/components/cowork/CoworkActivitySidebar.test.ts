@@ -14,13 +14,13 @@ import {
   shouldAutoFollowLiveCodeScroll,
 } from './liveCodePreviewUtils';
 
-test('runtime monitor is a separate activity sidebar mode', () => {
-  expect(CoworkActivitySidebarMode.RuntimeMonitor).toBe('runtime_monitor');
+test('activity sidebar exposes every supported mode', () => {
   expect(Object.values(CoworkActivitySidebarMode)).toEqual([
-    'overview',
-    'runtime_monitor',
-    'live_code',
-    'code_diff',
+    CoworkActivitySidebarMode.Overview,
+    CoworkActivitySidebarMode.RuntimeMonitor,
+    CoworkActivitySidebarMode.LiveCode,
+    CoworkActivitySidebarMode.CodeDiff,
+    CoworkActivitySidebarMode.OpenSquillaConsole,
   ]);
 });
 
