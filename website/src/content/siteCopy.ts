@@ -75,6 +75,8 @@ export type Copy = {
     appleSiliconHint: string;
     intel: string;
     intelHint: string;
+    windows: string;
+    windowsHint: string;
     allReleases: string;
   };
   hero: {
@@ -168,12 +170,14 @@ export const copy: Record<Language, Copy> = {
       download: 'Download',
     },
     downloadMenu: {
-      title: 'Choose your Mac',
-      description: 'Downloads the matching DMG from the latest GitHub Release.',
+      title: 'Choose your desktop build',
+      description: 'Downloads the matching installer from the latest GitHub Release.',
       appleSilicon: 'Apple Silicon',
       appleSiliconHint: 'M1, M2, M3, M4, and newer',
       intel: 'Intel',
       intelHint: 'Intel-based Macs',
+      windows: 'Windows x64',
+      windowsHint: '64-bit Windows 10 and 11',
       allReleases: 'View all releases',
     },
     hero: {
@@ -353,12 +357,14 @@ export const copy: Record<Language, Copy> = {
       download: '下载',
     },
     downloadMenu: {
-      title: '选择 Mac 版本',
-      description: '从最新 GitHub Release 下载对应的 DMG。',
+      title: '选择桌面版本',
+      description: '从最新 GitHub Release 下载对应的安装包。',
       appleSilicon: 'Apple 芯片',
       appleSiliconHint: 'M1、M2、M3、M4 及更新机型',
       intel: 'Intel 芯片',
       intelHint: '搭载 Intel 处理器的 Mac',
+      windows: 'Windows x64',
+      windowsHint: '64 位 Windows 10 和 Windows 11',
       allReleases: '查看全部发布版本',
     },
     hero: {

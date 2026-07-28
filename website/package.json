@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "tsc && vite build",
-    "preview": "vite preview --host 127.0.0.1"
+    "build": "npm run test && tsc && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run api/download.test.ts"
   },
   "dependencies": {
     "lucide-react": "^0.554.0",
@@ -19,6 +20,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "typescript": "^5.9.3",
-    "vite": "^7.2.7"
+    "vite": "^7.2.7",
+    "vitest": "^4.1.0"
   }
 }
