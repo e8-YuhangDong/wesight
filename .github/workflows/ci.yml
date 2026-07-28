@@ -22,6 +22,7 @@ jobs:
       skills: ${{ steps.changes.outputs.skills }}
       scripts: ${{ steps.changes.outputs.scripts }}
       docs: ${{ steps.changes.outputs.docs }}
+      website: ${{ steps.changes.outputs.website }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
@@ -47,6 +48,9 @@ jobs:
             docs:
               - 'docs/**'
               - '**/*.md'
+            website:
+              - 'website/**'
+              - 'package.json'
 
   # ========== Stage 2: 代码质量 (快速) ==========
   lint:
@@ -149,7 +153,32 @@ jobs:
       - run: npm install
       - run: npm run build:skills
 
-  # ========== Stage 6: 测试 (Node.js 内置) ==========
+  # ========== Stage 6: 官网构建 ==========
+  build-website:
+    needs: [changed-files, lint]
+    if: ${{ needs.changed-files.outputs.website == 'true' || github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+      - uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: website-npm-${{ runner.os }}-${{ hashFiles('website/package-lock.json') }}
+          restore-keys: website-npm-${{ runner.os }}-
+      - run: npm ci
+        working-directory: website
+      - run: npm run build
+        working-directory: website
+      - uses: actions/upload-artifact@v4
+        with:
+          name: website-dist
+          path: website/dist/
+          retention-days: 1
+
+  # ========== Stage 7: 测试 (Node.js 内置) ==========
   test:
     needs: [build-main]
     runs-on: ubuntu-latest
