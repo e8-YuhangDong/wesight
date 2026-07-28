@@ -1,5 +1,7 @@
 build/*
 !build/entitlements.mac.plist
+!build/dmg-background.png
+!build/dmg-background@2x.png
 !build/icons/
 !build/icons/**
 release/
