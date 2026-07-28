@@ -111,6 +111,28 @@
     ]
   },
   "dmg": {
+    "background": "build/dmg-background.png",
+    "icon": "build/icons/mac/icon.icns",
+    "iconSize": 112,
+    "iconTextSize": 14,
+    "title": "WeSight Installer ${version}",
+    "window": {
+      "width": 793,
+      "height": 496
+    },
+    "contents": [
+      {
+        "x": 220,
+        "y": 326,
+        "type": "file"
+      },
+      {
+        "x": 584,
+        "y": 326,
+        "type": "link",
+        "path": "/Applications"
+      }
+    ],
     "sign": true,
     "writeUpdateInfo": false
   },
@@ -171,12 +193,7 @@
           "!**/__tests__/**"
         ]
       }
-    ],
-    "desktop": {
-      "Name": "WeSight",
-      "Comment": "AI-Powered WeChat Intelligence",
-      "Terminal": "false"
-    }
+    ]
   },
   "nsis": {
     "artifactName": "${productName}.Setup.${env.WESIGHT_RELEASE_VERSION}.${ext}",
