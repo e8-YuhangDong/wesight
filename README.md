@@ -196,6 +196,32 @@ npm run electron:dev
 
 The Vite dev server runs at `http://localhost:5175`.
 
+### Website Development
+
+The public website lives in `website/` with its own dependencies and lock file. Install and run it independently from the Electron application:
+
+```bash
+npm ci --prefix website
+npm run website:dev
+```
+
+The website development server runs at `http://127.0.0.1:5173`. Production build and preview commands are available from the repository root:
+
+```bash
+npm run website:build
+npm run website:preview
+```
+
+The existing `wesight-portal` Vercel project uses `website` as its Root Directory, Vite as its framework, Node.js 24.x, and `main` as its Production Branch. Pull requests create Preview Deployments and pushes to `main` create Production Deployments. For a manual preview from an authenticated maintainer machine:
+
+```bash
+cd website
+vercel link --project wesight-portal --scope canghes-projects
+vercel deploy
+```
+
+Keep `.vercel/`, local environment files, `node_modules/`, and `dist/` out of Git. The `website/design-reference/` directory contains source concepts for design reference and is excluded from production static assets.
+
 ### Development With Agent Runtimes
 
 ```bash
@@ -231,6 +257,9 @@ npm run compile:electron
 
 # ESLint
 npm run lint
+
+# Public website
+npm run website:build
 ```
 
 ## Packaging

@@ -34,6 +34,7 @@ SKILLs/**/.server.pid
 SKILLs/**/.venv/
 
 package-lock.json
+!website/package-lock.json
 
 nul
 .work.env

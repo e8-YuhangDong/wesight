@@ -1,0 +1,239 @@
+.route-shell {
+  min-height: 100vh;
+}
+
+.route-page {
+  display: grid;
+  width: min(1180px, calc(100% - 36px));
+  min-height: 72vh;
+  gap: 24px;
+  margin: 0 auto;
+  padding: 144px 0 52px;
+}
+
+.route-hero,
+.guide-panel,
+.notice-panel,
+.route-card-grid article {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(13, 17, 23, 0.84);
+  box-shadow: var(--shadow);
+}
+
+.route-hero {
+  display: grid;
+  justify-items: start;
+  padding: clamp(30px, 5vw, 64px);
+  background:
+    radial-gradient(circle at 82% 12%, rgba(48, 230, 207, 0.16), transparent 34%),
+    radial-gradient(circle at 15% 88%, rgba(247, 182, 87, 0.11), transparent 32%),
+    rgba(13, 17, 23, 0.92);
+}
+
+.route-eyebrow,
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.route-eyebrow {
+  padding: 8px 11px;
+  border: 1px solid rgba(48, 230, 207, 0.26);
+  background: var(--teal-soft);
+}
+
+.route-hero h1 {
+  max-width: 840px;
+  margin: 24px 0 0;
+  font-size: clamp(42px, 7vw, 78px);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+
+.route-hero > p {
+  max-width: 760px;
+  margin: 24px 0 0;
+  color: var(--muted-strong);
+  font-size: 18px;
+  line-height: 1.75;
+}
+
+.status-pill {
+  margin-top: 24px;
+  padding: 9px 12px;
+  border: 1px solid rgba(247, 182, 87, 0.25);
+  background: var(--amber-soft);
+  color: var(--amber);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.route-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 30px;
+}
+
+.text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 46px;
+  padding: 0 10px;
+  color: var(--muted-strong);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.text-link:hover {
+  color: var(--text);
+}
+
+.route-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.route-card-grid article {
+  min-height: 190px;
+  padding: 26px;
+  box-shadow: none;
+}
+
+.route-card-grid article > svg {
+  margin-bottom: 18px;
+  color: var(--teal);
+}
+
+.route-card-grid h2,
+.guide-panel h2,
+.notice-panel h2 {
+  margin: 0;
+  font-size: 21px;
+  line-height: 1.25;
+}
+
+.route-card-grid p,
+.guide-panel p,
+.notice-panel p {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.guide-panel,
+.notice-panel {
+  padding: clamp(24px, 4vw, 40px);
+}
+
+.guide-heading,
+.notice-panel {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.guide-heading > svg,
+.notice-panel > svg {
+  flex: 0 0 auto;
+  color: var(--amber);
+}
+
+.guide-panel ol {
+  display: grid;
+  gap: 13px;
+  margin: 26px 0 0;
+  padding: 0;
+  counter-reset: guide-step;
+  list-style: none;
+}
+
+.guide-panel li {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  color: var(--muted-strong);
+  line-height: 1.6;
+  counter-increment: guide-step;
+}
+
+.guide-panel li::before {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  border: 1px solid rgba(48, 230, 207, 0.28);
+  border-radius: 50%;
+  color: var(--teal);
+  content: counter(guide-step);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.not-found {
+  min-height: 520px;
+  align-content: center;
+}
+
+.route-footer {
+  position: relative;
+  z-index: 1;
+  width: min(1180px, calc(100% - 36px));
+  margin: 0 auto;
+  padding-bottom: 40px;
+}
+
+@media (max-width: 760px) {
+  .route-page {
+    width: calc(100% - 36px);
+    padding-top: 106px;
+  }
+
+  .route-hero {
+    padding: 28px 22px;
+  }
+
+  .route-hero h1 {
+    font-size: 42px;
+  }
+
+  .route-hero > p {
+    font-size: 16px;
+  }
+
+  .route-actions {
+    width: 100%;
+  }
+
+  .route-actions .text-link {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .route-card-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .route-card-grid article {
+    min-height: 0;
+  }
+
+  .guide-heading,
+  .notice-panel {
+    flex-direction: column;
+  }
+}
