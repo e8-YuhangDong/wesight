@@ -98,8 +98,28 @@ describe('release version parsing', () => {
     });
   });
 
+  test('parses prerelease and build identifiers', () => {
+    expect(parseReleaseVersion('1.2.3-alpha.1+build.007')).toEqual({
+      version: '1.2.3-alpha.1+build.007',
+      tag: 'v1.2.3-alpha.1+build.007',
+      prerelease: true,
+    });
+  });
+
   test('rejects an invalid SemVer version', () => {
     expect(() => parseReleaseVersion('1.0')).toThrow('Release version must be valid SemVer');
+  });
+
+  test.each(['01.0.0', '1.0.0-01', '1.0.0-', '1.0.0+', '1.0.0+build..1'])(
+    'rejects invalid SemVer %s',
+    version => {
+      expect(() => parseReleaseVersion(version)).toThrow('Release version must be valid SemVer');
+    },
+  );
+
+  test('handles a long invalid prerelease in linear time', () => {
+    const version = `0.0.0-0.${'--.'.repeat(10_000)}`;
+    expect(() => parseReleaseVersion(version)).toThrow('Release version must be valid SemVer');
   });
 
   test('rejects a tag that does not match package.json', () => {

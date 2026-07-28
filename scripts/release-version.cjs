@@ -3,21 +3,73 @@
 const fs = require('fs');
 const path = require('path');
 
-const semverPattern =
-  /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
+function isNumericIdentifier(value) {
+  if (!value) return false;
+  return [...value].every(character => character >= '0' && character <= '9');
+}
+
+function isSemverIdentifier(value) {
+  if (!value) return false;
+  return [...value].every(
+    character =>
+      (character >= '0' && character <= '9') ||
+      (character >= 'A' && character <= 'Z') ||
+      (character >= 'a' && character <= 'z') ||
+      character === '-',
+  );
+}
+
+function hasValidCoreIdentifiers(core) {
+  const identifiers = core.split('.');
+  return (
+    identifiers.length === 3 &&
+    identifiers.every(
+      identifier =>
+        isNumericIdentifier(identifier) && (identifier === '0' || !identifier.startsWith('0')),
+    )
+  );
+}
+
+function hasValidPrereleaseIdentifiers(prerelease) {
+  return prerelease.split('.').every(identifier => {
+    if (!isSemverIdentifier(identifier)) return false;
+    return !isNumericIdentifier(identifier) || identifier === '0' || !identifier.startsWith('0');
+  });
+}
+
+function hasValidBuildIdentifiers(build) {
+  return build.split('.').every(isSemverIdentifier);
+}
 
 function parseReleaseVersion(input) {
   const version = typeof input === 'string' ? input.trim() : '';
-  const match = semverPattern.exec(version);
+  const buildSeparator = version.indexOf('+');
+  const hasMultipleBuildSeparators =
+    buildSeparator >= 0 && version.indexOf('+', buildSeparator + 1) >= 0;
+  const versionWithoutBuild = buildSeparator >= 0 ? version.slice(0, buildSeparator) : version;
+  const build = buildSeparator >= 0 ? version.slice(buildSeparator + 1) : undefined;
 
-  if (!match) {
+  const prereleaseSeparator = versionWithoutBuild.indexOf('-');
+  const core =
+    prereleaseSeparator >= 0
+      ? versionWithoutBuild.slice(0, prereleaseSeparator)
+      : versionWithoutBuild;
+  const prerelease =
+    prereleaseSeparator >= 0 ? versionWithoutBuild.slice(prereleaseSeparator + 1) : undefined;
+
+  if (
+    hasMultipleBuildSeparators ||
+    !hasValidCoreIdentifiers(core) ||
+    (prerelease !== undefined && !hasValidPrereleaseIdentifiers(prerelease)) ||
+    (build !== undefined && !hasValidBuildIdentifiers(build))
+  ) {
     throw new Error(`Release version must be valid SemVer, received: ${input || '<empty>'}`);
   }
 
   return {
     version,
     tag: `v${version}`,
-    prerelease: Boolean(match[4]),
+    prerelease: prerelease !== undefined,
   };
 }
 
