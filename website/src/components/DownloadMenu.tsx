@@ -1,4 +1,4 @@
-import { Apple, ChevronDown, Cpu, Download } from 'lucide-react';
+import { Apple, ChevronDown, Cpu, Download, MonitorDown } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 
 import { type Copy, releaseUrl } from '../content/siteCopy';
@@ -13,14 +13,10 @@ type DownloadMenuProps = {
 const downloadUrls = {
   appleSilicon: '/api/download?arch=arm64',
   intel: '/api/download?arch=x64',
+  windows: '/api/download?platform=windows&arch=x64',
 } as const;
 
-export function DownloadMenu({
-  align = 'start',
-  buttonClassName,
-  copy,
-  label,
-}: DownloadMenuProps) {
+export function DownloadMenu({ align = 'start', buttonClassName, copy, label }: DownloadMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const menuId = useId();
   const menuRef = useRef<HTMLDivElement>(null);
@@ -86,6 +82,14 @@ export function DownloadMenu({
             <span>
               <strong>{copy.intel}</strong>
               <small>{copy.intelHint}</small>
+            </span>
+            <Download size={17} />
+          </a>
+          <a href={downloadUrls.windows} role="menuitem" onClick={() => setIsOpen(false)}>
+            <MonitorDown size={20} />
+            <span>
+              <strong>{copy.windows}</strong>
+              <small>{copy.windowsHint}</small>
             </span>
             <Download size={17} />
           </a>
