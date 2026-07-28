@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { Link } from 'wouter';
 
-import { DownloadMenu } from './DownloadMenu';
 import {
   type Copy,
   docsUrl,
@@ -22,6 +21,7 @@ import {
   releaseUrl,
   repoUrl,
 } from '../content/siteCopy';
+import { DownloadMenu } from './DownloadMenu';
 
 export function Header({
   t,
