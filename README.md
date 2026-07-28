@@ -220,6 +220,8 @@ vercel link --project wesight-portal --scope canghes-projects
 vercel deploy
 ```
 
+Website download buttons use `website/api/download.js` to resolve the matching macOS DMG from the latest public GitHub Release. Keep both `arm64` and `x64` DMG assets attached to each production release.
+
 Keep `.vercel/`, local environment files, `node_modules/`, and `dist/` out of Git. The `website/design-reference/` directory contains source concepts for design reference and is excluded from production static assets.
 
 ### Development With Agent Runtimes

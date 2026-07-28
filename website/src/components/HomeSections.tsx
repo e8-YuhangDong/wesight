@@ -2,7 +2,6 @@ import {
   Bot,
   Boxes,
   Check,
-  Download,
   FileText,
   Github,
   MessageSquareText,
@@ -17,20 +16,18 @@ import {
   docsUrl,
   engines,
   heroStats,
-  type Language,
   logoUrl,
   productImages,
   releaseUrl,
   repoUrl,
 } from '../content/siteCopy';
+import { DownloadMenu } from './DownloadMenu';
 
 export function Header({
   t,
-  language,
   onToggleLanguage,
 }: {
   t: Copy;
-  language: Language;
   onToggleLanguage: () => void;
 }) {
   return (
@@ -57,14 +54,12 @@ export function Header({
         >
           {t.languageToggle}
         </button>
-        <a
-          className="header-cta"
-          href={releaseUrl}
-          aria-label={language === 'en' ? 'Download WeSight' : '下载 WeSight'}
-        >
-          <Download size={16} />
-          {t.header.download}
-        </a>
+        <DownloadMenu
+          align="end"
+          buttonClassName="header-cta"
+          copy={t.downloadMenu}
+          label={t.header.download}
+        />
       </div>
     </header>
   );
@@ -83,10 +78,11 @@ export function Hero({ t }: { t: Copy }) {
         </h1>
         <p>{t.hero.body}</p>
         <div className="hero-actions">
-          <a className="primary-button" href={releaseUrl}>
-            <Download size={18} />
-            {t.hero.primaryCta}
-          </a>
+          <DownloadMenu
+            buttonClassName="primary-button"
+            copy={t.downloadMenu}
+            label={t.hero.primaryCta}
+          />
           <a className="secondary-button" href={repoUrl}>
             <Github size={18} />
             {t.hero.secondaryCta}
@@ -330,10 +326,12 @@ export function FinalCta({ t }: { t: Copy }) {
           <p>{t.final.body}</p>
         </div>
         <div className="final-actions">
-          <a className="primary-button" href={releaseUrl}>
-            <Download size={18} />
-            {t.final.primaryCta}
-          </a>
+          <DownloadMenu
+            align="end"
+            buttonClassName="primary-button"
+            copy={t.downloadMenu}
+            label={t.final.primaryCta}
+          />
           <a className="secondary-button" href={repoUrl}>
             <Github size={18} />
             {t.final.secondaryCta}

@@ -68,6 +68,15 @@ export type Copy = {
     };
     download: string;
   };
+  downloadMenu: {
+    title: string;
+    description: string;
+    appleSilicon: string;
+    appleSiliconHint: string;
+    intel: string;
+    intelHint: string;
+    allReleases: string;
+  };
   hero: {
     title: string[];
     body: string;
@@ -157,6 +166,15 @@ export const copy: Record<Language, Copy> = {
         docs: 'Docs',
       },
       download: 'Download',
+    },
+    downloadMenu: {
+      title: 'Choose your Mac',
+      description: 'Downloads the matching DMG from the latest GitHub Release.',
+      appleSilicon: 'Apple Silicon',
+      appleSiliconHint: 'M1, M2, M3, M4, and newer',
+      intel: 'Intel',
+      intelHint: 'Intel-based Macs',
+      allReleases: 'View all releases',
     },
     hero: {
       title: ['Run your CLI agents', 'from one desktop app'],
@@ -333,6 +351,15 @@ export const copy: Record<Language, Copy> = {
         docs: '文档',
       },
       download: '下载',
+    },
+    downloadMenu: {
+      title: '选择 Mac 版本',
+      description: '从最新 GitHub Release 下载对应的 DMG。',
+      appleSilicon: 'Apple 芯片',
+      appleSiliconHint: 'M1、M2、M3、M4 及更新机型',
+      intel: 'Intel 芯片',
+      intelHint: '搭载 Intel 处理器的 Mac',
+      allReleases: '查看全部发布版本',
     },
     hero: {
       title: ['用一个桌面应用', '运行你的 CLI Agent'],

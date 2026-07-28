@@ -1,10 +1,11 @@
-import { ArrowLeft, Download } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Link } from 'wouter';
 
+import { DownloadMenu } from '../components/DownloadMenu';
 import { PageMeta } from '../components/PageMeta';
 import { RoutePage } from '../components/RoutePage';
 import { routeCopy } from '../content/routeCopy';
-import { type Language, releaseUrl } from '../content/siteCopy';
+import { copy, type Language } from '../content/siteCopy';
 
 type NotFoundPageProps = {
   language: Language;
@@ -30,10 +31,11 @@ export function NotFoundPage({ language, onToggleLanguage }: NotFoundPageProps) 
             <ArrowLeft size={18} />
             {t.common.backHome}
           </Link>
-          <a className="secondary-button" href={releaseUrl}>
-            <Download size={18} />
-            {t.common.download}
-          </a>
+          <DownloadMenu
+            buttonClassName="secondary-button"
+            copy={copy[language].downloadMenu}
+            label={t.common.download}
+          />
         </div>
       </section>
     </RoutePage>

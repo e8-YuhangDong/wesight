@@ -193,8 +193,10 @@ section,
 
 .header-cta {
   padding: 0 16px;
+  border: 0;
   background: #f4f4f2;
   color: #111317;
+  cursor: pointer;
 }
 
 .language-toggle:hover {
@@ -209,6 +211,7 @@ section,
   background: linear-gradient(180deg, #ffc267, #e98524);
   color: #1c1002;
   box-shadow: 0 16px 44px rgba(247, 146, 44, 0.24);
+  cursor: pointer;
 }
 
 .secondary-button {
@@ -217,6 +220,7 @@ section,
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.06);
   color: var(--text);
+  cursor: pointer;
 }
 
 .header-cta:hover,
@@ -224,6 +228,108 @@ section,
 .primary-button:hover,
 .secondary-button:hover {
   transform: translateY(-1px);
+}
+
+.download-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.download-menu-chevron {
+  transition: transform 160ms ease;
+}
+
+.download-menu button[aria-expanded='true'] .download-menu-chevron {
+  transform: rotate(180deg);
+}
+
+.download-menu-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 60;
+  display: grid;
+  width: min(330px, calc(100vw - 28px));
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(13, 17, 23, 0.98);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.58);
+  color: var(--text);
+  text-align: left;
+  backdrop-filter: blur(20px);
+}
+
+.download-menu--end .download-menu-panel {
+  right: 0;
+  left: auto;
+}
+
+.download-menu-heading {
+  display: grid;
+  gap: 5px;
+  padding: 10px 11px 12px;
+}
+
+.download-menu-heading strong {
+  font-size: 14px;
+}
+
+.download-menu-heading span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.download-menu-panel > a:not(.download-menu-releases) {
+  display: grid;
+  min-height: 64px;
+  grid-template-columns: 24px minmax(0, 1fr) 20px;
+  gap: 11px;
+  align-items: center;
+  padding: 10px 11px;
+  border-radius: 7px;
+}
+
+.download-menu-panel > a:not(.download-menu-releases):hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.download-menu-panel > a:not(.download-menu-releases) > svg:first-child {
+  color: var(--teal);
+}
+
+.download-menu-panel > a:not(.download-menu-releases) > svg:last-child {
+  color: var(--amber);
+}
+
+.download-menu-panel > a span {
+  display: grid;
+  gap: 4px;
+}
+
+.download-menu-panel > a strong {
+  font-size: 14px;
+}
+
+.download-menu-panel > a small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.download-menu-releases {
+  margin-top: 5px;
+  padding: 11px;
+  border-top: 1px solid var(--line-soft);
+  color: var(--muted-strong);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.download-menu-releases:hover {
+  color: var(--text);
 }
 
 .hero {
@@ -943,6 +1049,10 @@ section,
     font-size: 0;
   }
 
+  .download-menu--header-cta .download-menu-chevron {
+    display: none;
+  }
+
   .header-actions {
     gap: 8px;
   }
@@ -999,6 +1109,22 @@ section,
   .secondary-button {
     width: 100%;
     min-width: 0;
+  }
+
+  .download-menu {
+    width: 100%;
+  }
+
+  .header-actions .download-menu {
+    width: auto;
+  }
+
+  .download-menu-panel {
+    position: fixed;
+    top: 82px;
+    right: 14px;
+    left: 14px;
+    width: auto;
   }
 
   .hero-meta {
