@@ -19,6 +19,18 @@ const NativeTargetPathToken = {
   [MacArtifactTarget.Arm64]: ['arm64-darwin', 'darwin-arm64'],
 };
 
+const PackagedNativePathToken = [
+  ...Object.values(NativeTargetPathToken).flat(),
+  'x64-linux',
+  'linux-x64',
+  'arm64-linux',
+  'linux-arm64',
+  'x64-win32',
+  'win32-x64',
+  'arm64-win32',
+  'win32-arm64',
+];
+
 const rootDir = path.resolve(__dirname, '..');
 const target = (process.argv[2] || '').trim();
 
@@ -60,14 +72,23 @@ function findPackagedApps() {
 }
 
 function runFile(filePath) {
-  const result = spawnSync('file', [filePath], {
+  const result = runCommand('file', [filePath]);
+  return (result.stdout || '').trim();
+}
+
+function runCommand(command, args) {
+  const result = spawnSync(command, args, {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   if (result.status !== 0) {
-    fail(`Could not inspect file architecture for ${filePath}: ${result.stderr || result.error?.message || 'unknown error'}`);
+    fail(
+      `${command} failed: ${
+        result.stderr || result.stdout || result.error?.message || 'unknown error'
+      }`,
+    );
   }
-  return (result.stdout || '').trim();
+  return result;
 }
 
 function selectApp(apps, expectedToken) {
@@ -87,15 +108,84 @@ function assertFileHasArch(filePath, expectedToken) {
   log(output);
 }
 
+function findDmg(expectedArch) {
+  const releaseDir = path.join(rootDir, 'release');
+  if (!fs.existsSync(releaseDir)) return null;
+
+  const matching = fs
+    .readdirSync(releaseDir, { withFileTypes: true })
+    .filter(
+      (entry) =>
+        entry.isFile() &&
+        entry.name.endsWith(`.mac.${expectedArch}.dmg`),
+    )
+    .map((entry) => path.join(releaseDir, entry.name))
+    .sort(
+      (left, right) =>
+        fs.statSync(right).mtimeMs - fs.statSync(left).mtimeMs,
+    );
+
+  return matching[0] || null;
+}
+
+function assertAppleDistributionReady(appPath, expectedArch) {
+  const teamId = process.env.APPLE_TEAM_ID?.trim();
+  if (!teamId) {
+    fail('APPLE_TEAM_ID is required for Apple distribution verification.');
+  }
+
+  runCommand('codesign', ['--verify', '--deep', '--strict', '--verbose=2', appPath]);
+  const signature = runCommand('codesign', ['-dv', '--verbose=4', appPath]);
+  const signatureDetails = `${signature.stdout || ''}\n${signature.stderr || ''}`;
+  if (!signatureDetails.includes('Authority=Developer ID Application:')) {
+    fail('The packaged app is not signed with a Developer ID Application certificate.');
+  }
+  if (!signatureDetails.includes(`TeamIdentifier=${teamId}`)) {
+    fail(`The packaged app signature does not use Apple team ${teamId}.`);
+  }
+
+  runCommand('xcrun', ['stapler', 'validate', '-v', appPath]);
+  runCommand('spctl', ['--assess', '--type', 'execute', '--verbose=4', appPath]);
+
+  const dmgPath = findDmg(expectedArch);
+  if (!dmgPath) {
+    fail(`No ${expectedArch} DMG was found under ${path.join(rootDir, 'release')}.`);
+  }
+
+  runCommand('codesign', ['--verify', '--strict', '--verbose=2', dmgPath]);
+  runCommand('xcrun', ['stapler', 'validate', '-v', dmgPath]);
+  runCommand('spctl', [
+    '--assess',
+    '--type',
+    'open',
+    '--context',
+    'context:primary-signature',
+    '--verbose=4',
+    dmgPath,
+  ]);
+
+  log(`Verified Developer ID signing and notarization for ${dmgPath}.`);
+}
+
 function shouldInspectNativeModule(filePath) {
   const normalizedPath = filePath.replace(/\\/g, '/');
   const targetPathTokens = NativeTargetPathToken[target];
-  if (targetPathTokens.some((token) => normalizedPath.includes(`/${token}/`) || normalizedPath.includes(`/${token}.node`))) {
+  const pathSegments = normalizedPath.split('/');
+  const hasTargetToken = (tokens) =>
+    tokens.some((token) =>
+      pathSegments.some(
+        (segment) =>
+          segment === token ||
+          segment.startsWith(`${token}-`) ||
+          segment.includes(`-${token}`),
+      ),
+    );
+
+  if (hasTargetToken(targetPathTokens)) {
     return true;
   }
 
-  const packagedTargetPattern = /\/(?:x64|arm64)-(?:darwin|linux|win32)\/|\/(?:darwin|linux|win32)-(?:x64|arm64)\//;
-  return !packagedTargetPattern.test(normalizedPath);
+  return !hasTargetToken(PackagedNativePathToken);
 }
 
 const apps = findPackagedApps();
@@ -139,4 +229,9 @@ for (const nativeModule of nativeModules.sort()) {
 log(`Verified ${nativeModules.length} native module(s).`);
 if (skippedNativeModules.length > 0) {
   log(`Skipped ${skippedNativeModules.length} non-target vendor native module(s).`);
+}
+
+if (process.env.WESIGHT_REQUIRE_APPLE_NOTARIZATION === 'true') {
+  const artifactArch = target === MacArtifactTarget.X64 ? 'x64' : 'arm64';
+  assertAppleDistributionReady(appPath, artifactArch);
 }
