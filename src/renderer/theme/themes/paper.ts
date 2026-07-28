@@ -6,6 +6,8 @@ export const paper: ThemeDefinition = {
     id: 'paper',
     name: '纸墨素白',
     description: '极简纸质感主题，专注阅读与书写',
+    nameKey: 'themeNamePaper',
+    descriptionKey: 'themeDescriptionPaper',
     appearance: 'light',
     preview: ['#fafaf9', '#18181b', '#71717a', '#a1a1aa'],
   },

@@ -6,6 +6,8 @@ export const emerald: ThemeDefinition = {
     id: 'emerald',
     name: '翡翠暗绿',
     description: '自然灵动的翡翠绿暗色主题',
+    nameKey: 'themeNameEmerald',
+    descriptionKey: 'themeDescriptionEmerald',
     appearance: 'dark',
     preview: ['#0a1a14', '#10b981', '#34d399', '#67e8f9'],
   },

@@ -6,6 +6,8 @@ export const classicLight: ThemeDefinition = {
     id: 'classic-light',
     name: '经典浅色',
     description: '原生默认浅色主题，冷调灰白',
+    nameKey: 'themeNameClassicLight',
+    descriptionKey: 'themeDescriptionClassicLight',
     appearance: 'light',
     preview: ['#F8F9FB', '#FFD700', '#FFDF33', '#6B7280'],
   },

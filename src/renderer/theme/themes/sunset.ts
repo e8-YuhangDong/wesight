@@ -6,6 +6,8 @@ export const sunset: ThemeDefinition = {
     id: 'sunset',
     name: '落日橙黑',
     description: '绚烂夺目的日落橙暗色主题',
+    nameKey: 'themeNameSunset',
+    descriptionKey: 'themeDescriptionSunset',
     appearance: 'dark',
     preview: ['#1a0e0a', '#f97316', '#fb923c', '#fb7185'],
   },

@@ -22,6 +22,7 @@ import ComposeIcon from '../icons/ComposeIcon';
 import SidebarToggleIcon from '../icons/SidebarToggleIcon';
 import { PromptPanel,QuickActionBar } from '../quick-actions';
 import type { SettingsOpenOptions } from '../Settings';
+import { SettingsTab } from '../settings/constants';
 import WindowTitleBar from '../window/WindowTitleBar';
 import CoworkPromptInput, { type CoworkPromptInputRef, type CoworkSlashCommandHandler } from './CoworkPromptInput';
 import CoworkSessionDetail from './CoworkSessionDetail';
@@ -267,7 +268,7 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
       const message = i18nService.t('coworkAgentEngineCliRequiredBeforeSend');
       window.dispatchEvent(new CustomEvent('app:showToast', { detail: message }));
       onRequestAppSettings?.({
-        initialTab: 'coworkAgentEngine',
+        initialTab: SettingsTab.CoworkAgentEngine,
         noticeI18nKey: 'coworkAgentEngineCliRequiredBeforeSend',
         noticeExtra: i18nService.t(getEngineLabelKey(selectedRuntimeEngine)),
       });
@@ -314,7 +315,7 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
           const apiConfig = await coworkService.checkApiConfig();
           if (apiConfig && !apiConfig.hasConfig) {
             onRequestAppSettings?.({
-              initialTab: 'model',
+              initialTab: SettingsTab.Model,
               ...buildApiConfigNotice(apiConfig.error),
             });
           }
@@ -378,7 +379,7 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
           const apiConfig = await coworkService.checkApiConfig();
           if (apiConfig && !apiConfig.hasConfig) {
             onRequestAppSettings?.({
-              initialTab: 'model',
+              initialTab: SettingsTab.Model,
               ...buildApiConfigNotice(apiConfig.error),
             });
             isStartingRef.current = false;
@@ -727,11 +728,11 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
         onShowSkills?.();
         return true;
       case CoworkGraphicalSlashCommand.Memory:
-        onRequestAppSettings?.({ initialTab: 'coworkMemory' });
+        onRequestAppSettings?.({ initialTab: SettingsTab.CoworkMemory });
         return true;
       case CoworkGraphicalSlashCommand.Config:
       case CoworkGraphicalSlashCommand.Permissions:
-        onRequestAppSettings?.({ initialTab: 'coworkAgentEngine' });
+        onRequestAppSettings?.({ initialTab: SettingsTab.CoworkAgentEngine });
         return true;
       default:
         if (selectedRuntimeEngine === CoworkAgentEngine.ClaudeCode) {
@@ -1113,7 +1114,7 @@ const CoworkView: React.FC<CoworkViewProps> = ({ onRequestAppSettings, onShowSki
 
   // Home view - no current session
   return (
-    <div className="flex-1 flex flex-col bg-background h-full">
+    <div className="theme-skin-home flex-1 flex flex-col bg-background h-full">
       {/* Engine status banner for error states */}
       {engineStatusBanner}
 

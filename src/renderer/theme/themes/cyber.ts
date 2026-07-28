@@ -6,6 +6,8 @@ export const cyber: ThemeDefinition = {
     id: 'cyber',
     name: '赛博霓虹',
     description: '充满未来感的赛博朋克霓虹暗色主题',
+    nameKey: 'themeNameCyber',
+    descriptionKey: 'themeDescriptionCyber',
     appearance: 'dark',
     preview: ['#0a0a1a', '#a855f7', '#c084fc', '#22d3ee'],
   },

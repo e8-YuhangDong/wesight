@@ -1,4 +1,5 @@
 import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
+import { SkinSurfaceMode } from '@shared/theme/constants';
 import React, { useCallback, useEffect, useMemo,useRef, useState } from 'react';
 import { useDispatch,useSelector } from 'react-redux';
 
@@ -11,6 +12,7 @@ import EngineStartupOverlay from './components/cowork/EngineStartupOverlay';
 import PrivacyDialog from './components/PrivacyDialog';
 import RuntimeDashboardView from './components/runtime/RuntimeDashboardView';
 import Settings, { type SettingsOpenOptions } from './components/Settings';
+import { SettingsTab } from './components/settings/constants';
 import Sidebar from './components/Sidebar';
 import { SkillsView } from './components/skills';
 import Toast from './components/Toast';
@@ -63,6 +65,15 @@ const App: React.FC = () => {
   const pendingPermission = pendingPermissions[0] ?? null;
   const isWindows = window.electron.platform === 'win32';
 
+  useEffect(() => {
+    const surfaceMode = mainView !== 'cowork'
+      ? SkinSurfaceMode.Utility
+      : currentSessionId
+        ? SkinSurfaceMode.Task
+        : SkinSurfaceMode.Home;
+    themeService.setSurfaceMode(surfaceMode);
+  }, [currentSessionId, mainView]);
+
   const waitWithTimeout = useCallback(
     async <T,>(promise: Promise<T>, timeoutMs: number, label: string): Promise<T> => {
       return await new Promise<T>((resolve, reject) => {
@@ -108,7 +119,7 @@ const App: React.FC = () => {
 
         // 初始化主题
         console.info('[App] initializeApp: themeService.initialize');
-        themeService.initialize();
+        await themeService.initialize();
 
         // 初始化语言
         console.info('[App] initializeApp: i18nService.initialize');
@@ -288,7 +299,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleShowMcp = useCallback(() => {
-    handleShowSettings({ initialTab: 'mcp' });
+    handleShowSettings({ initialTab: SettingsTab.Mcp });
   }, [handleShowSettings]);
 
   const handleShowAgents = useCallback(() => {
@@ -296,7 +307,7 @@ const App: React.FC = () => {
   }, []);
 
   const handleShowAgentSettings = useCallback(() => {
-    handleShowSettings({ initialTab: 'agents' });
+    handleShowSettings({ initialTab: SettingsTab.Agents });
   }, [handleShowSettings]);
 
   const handleToggleSidebar = useCallback(() => {
@@ -708,11 +719,12 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col bg-surface-raised">
+    <div className="theme-skin-shell h-screen overflow-hidden flex flex-col bg-surface-raised">
+      <div className="theme-skin-backdrop" aria-hidden="true" />
       {toastMessage && (
         <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
       )}
-      <div className="flex flex-1 min-h-0 overflow-hidden">
+      <div className="relative z-10 flex flex-1 min-h-0 overflow-hidden">
         <Sidebar
           onShowLogin={handleShowLogin}
           onShowSettings={handleShowSettings}
@@ -729,7 +741,7 @@ const App: React.FC = () => {
           hideLogin={enterpriseConfig?.ui?.login === 'hide'}
         />
         <div className={`flex-1 min-w-0 py-1.5 pr-1.5 ${isSidebarCollapsed ? 'pl-1.5' : ''}`}>
-          <div className="relative h-full min-h-0 rounded-xl bg-background overflow-hidden">
+          <div className="theme-skin-main-surface relative h-full min-h-0 rounded-xl bg-background overflow-hidden">
             <EngineStartupOverlay />
             {mainView === 'skills' ? (
               <SkillsView

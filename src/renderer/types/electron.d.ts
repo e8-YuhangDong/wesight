@@ -29,6 +29,10 @@ import type {
   PetPosition,
 } from '@shared/pet/constants';
 import type { SkillMarketplaceSort, SkillMarketplaceSourceType } from '@shared/skills/constants';
+import type {
+  ThemeSkinAssetResult,
+  ThemeSkinPruneResult,
+} from '@shared/theme/constants';
 
 interface ApiResponse {
   ok: boolean;
@@ -563,8 +567,17 @@ interface IElectronAPI {
   arch: string;
   store: {
     get: (key: string) => Promise<any>;
-    set: (key: string, value: any) => Promise<void>;
+    set: (
+      key: string,
+      value: any,
+      options?: { syncRuntimeConfig?: boolean },
+    ) => Promise<void>;
     remove: (key: string) => Promise<void>;
+  };
+  themeSkin: {
+    importAsset: (sourcePath: string) => Promise<ThemeSkinAssetResult>;
+    resolveAsset: (assetId: string) => Promise<ThemeSkinAssetResult>;
+    pruneAssets: (keepAssetIds: string[]) => Promise<ThemeSkinPruneResult>;
   };
   skills: {
     list: () => Promise<{ success: boolean; skills?: Skill[]; error?: string }>;

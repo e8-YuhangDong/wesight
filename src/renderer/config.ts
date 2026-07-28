@@ -1,5 +1,11 @@
 import { DEFAULT_PET_CONFIG, type PetConfig } from '@shared/pet/constants';
 import { ProviderName, ProviderRegistry } from '@shared/providers';
+import {
+  createDefaultThemeSkinState,
+  ThemeAppearanceMode,
+  type ThemeAppearanceMode as ThemeAppearanceModeType,
+  type ThemeSkinState,
+} from '@shared/theme/constants';
 
 // 配置类型定义
 export interface AppConfig {
@@ -248,7 +254,9 @@ export interface AppConfig {
     };
   };
   // 主题配置
-  theme: 'light' | 'dark' | 'system';
+  theme: ThemeAppearanceModeType;
+  // Versioned theme and wallpaper composition.
+  themeSkin: ThemeSkinState;
   // 语言配置
   language: 'zh' | 'en';
   // 是否使用系统代理
@@ -311,7 +319,8 @@ export const defaultConfig: AppConfig = {
     defaultModelProvider: 'deepseek',
   },
   providers: buildDefaultProviders(),
-  theme: 'system',
+  theme: ThemeAppearanceMode.System,
+  themeSkin: createDefaultThemeSkinState(),
   language: 'zh',
   useSystemProxy: false,
   pet: DEFAULT_PET_CONFIG,

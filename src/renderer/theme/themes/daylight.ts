@@ -6,6 +6,8 @@ export const daylight: ThemeDefinition = {
     id: 'daylight',
     name: '日光暖白',
     description: '温暖柔和的暖白色主题，轻松自然',
+    nameKey: 'themeNameDaylight',
+    descriptionKey: 'themeDescriptionDaylight',
     appearance: 'light',
     preview: ['#fffbeb', '#f59e0b', '#fbbf24', '#f97316'],
   },

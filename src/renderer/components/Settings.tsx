@@ -1,5 +1,5 @@
 import { EyeIcon, EyeSlashIcon, XCircleIcon as XCircleIconSolid } from '@heroicons/react/20/solid';
-import { ArrowPathIcon, ArrowTopRightOnSquareIcon,ChatBubbleLeftIcon, CheckCircleIcon, ClockIcon, Cog6ToothIcon, CommandLineIcon, CpuChipIcon, CubeIcon, EnvelopeIcon, InformationCircleIcon, SignalIcon, UserCircleIcon, UserGroupIcon, XCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ArrowPathIcon, ArrowTopRightOnSquareIcon,ChatBubbleLeftIcon, CheckCircleIcon, ClockIcon, Cog6ToothIcon, CommandLineIcon, CpuChipIcon, CubeIcon, EnvelopeIcon, InformationCircleIcon, SignalIcon, SwatchIcon, UserCircleIcon, UserGroupIcon, XCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 import {
   ClaudeCodePermissionMode as ClaudeCodePermissionModeValue,
   CoworkAgentEngine as CoworkAgentEngineValue,
@@ -98,10 +98,12 @@ import IMSettings from './im/IMSettings';
 import McpManager from './mcp/McpManager';
 import PetSprite, { PetMood } from './pet/PetSprite';
 import { ScheduledTasksView } from './scheduledTasks';
+import { SettingsTab, type SettingsTab as SettingsTabType } from './settings/constants';
+import ThemeSkinSettings from './settings/ThemeSkinSettings';
 import EmailSkillConfig from './skills/EmailSkillConfig';
 import ThemedSelect from './ui/ThemedSelect';
 
-type TabType = 'general'| 'coworkAgentEngine' | 'model' | 'coworkMemory' | 'coworkAgent' | 'agents' | 'shortcuts' | 'im' | 'email' | 'scheduledTasks' | 'mcp' | 'about';
+const SHOW_LEGACY_THEME_CONTROLS = false;
 
 const COWORK_AGENT_ENGINE_OPTIONS: Array<{
   value: CoworkAgentEngine;
@@ -228,7 +230,7 @@ const toAudioSource = (audioPath: string): string => (
 );
 
 export type SettingsOpenOptions = {
-  initialTab?: TabType;
+  initialTab?: SettingsTabType;
   notice?: string;
   noticeI18nKey?: string;
   noticeExtra?: string;
@@ -688,7 +690,7 @@ const ShortcutRecorder: React.FC<{ value: string; onChange: (v: string) => void 
 const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, noticeI18nKey, noticeExtra, openedAtMs, onUpdateFound, enterpriseConfig }) => {
   const dispatch = useDispatch();
   // 状态
-  const [activeTab, setActiveTab] = useState<TabType>(initialTab ?? 'general');
+  const [activeTab, setActiveTab] = useState<SettingsTabType>(initialTab ?? SettingsTab.General);
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
   const [themeId, setThemeId] = useState<string>(themeService.getThemeId());
   const [petEnabled, setPetEnabled] = useState(DEFAULT_PET_CONFIG.enabled);
@@ -726,15 +728,13 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
   const [pendingDeleteProvider, setPendingDeleteProvider] = useState<ProviderType | null>(null);
   const [isImportingProviders, setIsImportingProviders] = useState(false);
   const [isExportingProviders, setIsExportingProviders] = useState(false);
-  const initialThemeRef = useRef<'light' | 'dark' | 'system'>(themeService.getTheme());
-  const initialThemeIdRef = useRef<string>(themeService.getThemeId());
   const initialPetConfigRef = useRef<PetConfig>(DEFAULT_PET_CONFIG);
   const initialLanguageRef = useRef<LanguageType>(i18nService.getLanguage());
   const didSaveRef = useRef(false);
   const openedAtRef = useRef(openedAtMs);
   const reportedOpenRef = useRef(false);
-  const reportedTabsRef = useRef<Set<TabType>>(new Set());
-  const activeTabRef = useRef<TabType>(activeTab);
+  const reportedTabsRef = useRef<Set<SettingsTabType>>(new Set());
+  const activeTabRef = useRef<SettingsTabType>(activeTab);
 
   // Add state for active provider
   const [activeProvider, setActiveProvider] = useState<ProviderType>(getDefaultActiveProvider());
@@ -1328,7 +1328,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
   }, []);
 
   useEffect(() => {
-    if (activeTab !== 'coworkAgentEngine') return;
+    if (activeTab !== SettingsTab.CoworkAgentEngine) return;
     let active = true;
     void measureSettingsIpc('cowork:agentEngine:snapshot', () => coworkService.getAgentEngineSnapshot()).then((snapshot) => {
       if (!active) return;
@@ -1387,13 +1387,13 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
   }, [measureSettingsIpc]);
 
   useEffect(() => {
-    if (activeTab !== 'coworkAgentEngine' || !selectedExternalAgentAppType) return;
+    if (activeTab !== SettingsTab.CoworkAgentEngine || !selectedExternalAgentAppType) return;
     void refreshAgentEnvironmentSnapshot({ forceRefresh: true, appTypes: [selectedExternalAgentAppType] });
     void loadAgentProviders(selectedExternalAgentAppType);
   }, [activeTab, loadAgentProviders, selectedExternalAgentAppType]);
 
   useEffect(() => {
-    if (activeTab !== 'general') return;
+    if (activeTab !== SettingsTab.General) return;
     let active = true;
     void measureSettingsIpc('cowork:startupServices:status', () => coworkService.getStartupServicesStatus()).then((services) => {
       if (!active) return;
@@ -1411,7 +1411,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
 
   useEffect(() => {
     if (
-      activeTab !== 'coworkAgentEngine'
+      activeTab !== SettingsTab.CoworkAgentEngine
       || (coworkAgentEngine !== CoworkAgentEngineValue.OpenClaw
         && expandedCoworkAgentEngine !== CoworkAgentEngineValue.OpenClaw)
     ) return;
@@ -1432,7 +1432,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
 
   useEffect(() => {
     if (
-      activeTab !== 'coworkAgentEngine'
+      activeTab !== SettingsTab.CoworkAgentEngine
       || (coworkAgentEngine !== CoworkAgentEngineValue.Hermes
         && expandedCoworkAgentEngine !== CoworkAgentEngineValue.Hermes)
     ) return;
@@ -1456,7 +1456,6 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
       const config = configService.getConfig();
       
       // Set general settings
-      initialThemeRef.current = config.theme;
       initialLanguageRef.current = config.language;
       const savedPetConfig = normalizePetConfig(config.pet);
       initialPetConfigRef.current = savedPetConfig;
@@ -1682,15 +1681,12 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
   }, [measureSettingsIpc]);
 
   useEffect(() => {
-    const initialThemeId = initialThemeIdRef.current;
-    const initialTheme = initialThemeRef.current;
     const initialPetConfig = initialPetConfigRef.current;
     const initialLanguage = initialLanguageRef.current;
     return () => {
       if (didSaveRef.current) {
         return;
       }
-      themeService.restoreTheme(initialThemeId, initialTheme);
       void window.electron.desktopPet.applyPreview(initialPetConfig);
       i18nService.setLanguage(initialLanguage, { persist: false });
     };
@@ -2091,7 +2087,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
       && (kimiCodeConfigSource !== coworkConfig.kimiCodeConfigSource
         || kimiCodePermissionMode !== coworkConfig.kimiCodePermissionMode));
   const isCoworkAgentConfigApplying = isSaving
-    && activeTab === 'coworkAgentEngine'
+    && activeTab === SettingsTab.CoworkAgentEngine
     && hasCoworkAgentEngineApplyChanges;
 
   const openClawProgressPercent = useMemo(() => {
@@ -2179,7 +2175,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
   ]);
 
   useEffect(() => {
-    if (activeTab !== 'coworkMemory') return;
+    if (activeTab !== SettingsTab.CoworkMemory) return;
     void loadCoworkMemoryData();
   }, [activeTab, loadCoworkMemoryData]);
 
@@ -2199,7 +2195,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
   };
 
   useEffect(() => {
-    if (activeTab !== 'coworkAgent') return;
+    if (activeTab !== SettingsTab.CoworkAgent) return;
     if (!bootstrapLoaded) {
       void (async () => {
         const [identity, user, soul] = await Promise.all([
@@ -2423,7 +2419,6 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
           baseUrl: primaryProvider.baseUrl,
         },
         providers: normalizedProviders, // Save all providers configuration
-        theme,
         language,
         useSystemProxy,
         pet: {
@@ -2439,9 +2434,6 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
           testMode,
         },
       });
-
-      // 应用主题
-      themeService.setTheme(theme);
 
       // 应用语言
       i18nService.setLanguage(language, { persist: false });
@@ -2535,8 +2527,8 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
   };
 
   // 标签页切换处理
-  const handleTabChange = (tab: TabType) => {
-    if (tab !== 'model') {
+  const handleTabChange = (tab: SettingsTabType) => {
+    if (tab !== SettingsTab.Model) {
       setIsAddingModel(false);
       setIsEditingModel(false);
       setEditingModelId(null);
@@ -3310,7 +3302,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
   };
 
   // 渲染标签页
-  const sidebarTabs: { key: TabType; label: string; icon: React.ReactNode }[] = useMemo(() => {
+  const sidebarTabs: { key: SettingsTabType; label: string; icon: React.ReactNode }[] = useMemo(() => {
     const tabLabel = (key: string): string => {
       if (language === 'en' || language === 'zh') {
         return i18nService.t(key);
@@ -3318,18 +3310,19 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
       return i18nService.t(key);
     };
     const allTabs = [
-      { key: 'general' as TabType,        label: tabLabel('general'),        icon: <Cog6ToothIcon className="h-5 w-5" /> },
-      { key: 'coworkAgentEngine' as TabType, label: tabLabel('coworkAgentEngine'), icon: <CpuChipIcon className="h-5 w-5" /> },
-      { key: 'model' as TabType,          label: tabLabel('model'),          icon: <CubeIcon className="h-5 w-5" /> },
-      { key: 'im' as TabType,             label: tabLabel('imBot'),          icon: <ChatBubbleLeftIcon className="h-5 w-5" /> },
-      { key: 'email' as TabType,          label: tabLabel('emailTab'),       icon: <EnvelopeIcon className="h-5 w-5" /> },
-      { key: 'scheduledTasks' as TabType, label: tabLabel('scheduledTasksTitle'), icon: <ClockIcon className="h-5 w-5" /> },
-      { key: 'mcp' as TabType,            label: tabLabel('mcpServers'),     icon: <ConnectorIcon className="h-5 w-5" /> },
-      { key: 'coworkMemory' as TabType,   label: tabLabel('coworkMemoryTitle'), icon: <BrainIcon className="h-5 w-5" /> },
-      { key: 'coworkAgent' as TabType,    label: tabLabel('coworkAgentTab'),    icon: <UserCircleIcon className="h-5 w-5" /> },
-      { key: 'agents' as TabType,         label: tabLabel('agentManagement'), icon: <UserGroupIcon className="h-5 w-5" /> },
-      { key: 'shortcuts' as TabType,      label: tabLabel('shortcuts'),      icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5"><rect x="2" y="4" width="20" height="14" rx="2" /><line x1="6" y1="8" x2="8" y2="8" /><line x1="10" y1="8" x2="12" y2="8" /><line x1="14" y1="8" x2="16" y2="8" /><line x1="6" y1="12" x2="8" y2="12" /><line x1="10" y1="12" x2="14" y2="12" /><line x1="16" y1="12" x2="18" y2="12" /><line x1="8" y1="15.5" x2="16" y2="15.5" /></svg> },
-      { key: 'about' as TabType,          label: tabLabel('about'),          icon: <InformationCircleIcon className="h-5 w-5" /> },
+      { key: SettingsTab.General,        label: tabLabel('general'),        icon: <Cog6ToothIcon className="h-5 w-5" /> },
+      { key: SettingsTab.CoworkAgentEngine, label: tabLabel('coworkAgentEngine'), icon: <CpuChipIcon className="h-5 w-5" /> },
+      { key: SettingsTab.Model,          label: tabLabel('model'),          icon: <CubeIcon className="h-5 w-5" /> },
+      { key: SettingsTab.Im,             label: tabLabel('imBot'),          icon: <ChatBubbleLeftIcon className="h-5 w-5" /> },
+      { key: SettingsTab.Email,          label: tabLabel('emailTab'),       icon: <EnvelopeIcon className="h-5 w-5" /> },
+      { key: SettingsTab.ScheduledTasks, label: tabLabel('scheduledTasksTitle'), icon: <ClockIcon className="h-5 w-5" /> },
+      { key: SettingsTab.Mcp,            label: tabLabel('mcpServers'),     icon: <ConnectorIcon className="h-5 w-5" /> },
+      { key: SettingsTab.CoworkMemory,   label: tabLabel('coworkMemoryTitle'), icon: <BrainIcon className="h-5 w-5" /> },
+      { key: SettingsTab.CoworkAgent,    label: tabLabel('coworkAgentTab'),    icon: <UserCircleIcon className="h-5 w-5" /> },
+      { key: SettingsTab.Agents,         label: tabLabel('agentManagement'), icon: <UserGroupIcon className="h-5 w-5" /> },
+      { key: SettingsTab.Shortcuts,      label: tabLabel('shortcuts'),      icon: <CommandLineIcon className="h-5 w-5" /> },
+      { key: SettingsTab.ThemeSkin,      label: tabLabel('themeSkinTitle'), icon: <SwatchIcon className="h-5 w-5" /> },
+      { key: SettingsTab.About,          label: tabLabel('about'),          icon: <InformationCircleIcon className="h-5 w-5" /> },
     ];
     // Filter out tabs hidden by enterprise config
     // Filter out tabs with 'hide' action in enterprise config
@@ -4954,7 +4947,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
 
   const renderTabContent = () => {
     switch(activeTab) {
-      case 'general':
+      case SettingsTab.General:
         return (
           <div className="space-y-8">
             <section className="rounded-2xl border border-border bg-surface-raised/40 p-4">
@@ -5157,6 +5150,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
             </div>
 
             {/* Appearance Section — mode selector + theme gallery */}
+            {SHOW_LEGACY_THEME_CONTROLS && (
             <div>
               <h4 className="text-sm font-medium mb-3" style={{ color: 'var(--lobster-text-primary)' }}>
                 {i18nService.t('appearance')}
@@ -5320,8 +5314,10 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
                   </>
                 );
               })()}
+            </div>
+            )}
 
-              {(() => {
+            {(() => {
                 const currentPetConfig: PetConfig = {
                   enabled: petEnabled,
                   variant: petVariant,
@@ -5764,15 +5760,14 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
                     )}
                   </div>
                 );
-              })()}
-            </div>
+            })()}
           </div>
         );
 
-      case 'email':
+      case SettingsTab.Email:
         return <EmailSkillConfig />;
 
-      case 'coworkAgentEngine':
+      case SettingsTab.CoworkAgentEngine:
         return (
           <div className="space-y-6">
             <AgentEnvironmentSetup
@@ -5793,7 +5788,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
           </div>
         );
 
-      case 'coworkMemory':
+      case SettingsTab.CoworkMemory:
         return (
           <div className="space-y-6">
             {/* Section 1: Long-term Memory (MEMORY.md) */}
@@ -5891,7 +5886,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
           </div>
         );
 
-      case 'model':
+      case SettingsTab.Model:
         return (
           <div className="flex h-full">
             {/* Provider List - Left Side */}
@@ -6845,7 +6840,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
           </div>
         );
 
-      case 'coworkAgent':
+      case SettingsTab.CoworkAgent:
         return (
           <div className="space-y-6">
             {/* Agent Settings (IDENTITY.md + SOUL.md) */}
@@ -6894,7 +6889,7 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
           </div>
         );
 
-      case 'shortcuts':
+      case SettingsTab.Shortcuts:
         return (
           <div className="space-y-5">
             <div>
@@ -6919,23 +6914,30 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
           </div>
         );
 
-      case 'im':
+      case SettingsTab.Im:
         return <IMSettings />;
 
-      case 'scheduledTasks':
+      case SettingsTab.ScheduledTasks:
         return (
           <div className="h-full min-h-0">
             <ScheduledTasksView embedded />
           </div>
         );
 
-      case 'mcp':
+      case SettingsTab.Mcp:
         return <McpManager />;
 
-      case 'agents':
+      case SettingsTab.Agents:
         return <AgentsView embedded />;
 
-      case 'about':
+      case SettingsTab.ThemeSkin:
+        return (
+          <ThemeSkinSettings
+            readOnly={enterpriseConfig?.ui?.['settings.themeSkin'] === 'readonly'}
+          />
+        );
+
+      case SettingsTab.About:
         return (
           <div className="flex min-h-full flex-col items-center pt-6 pb-3">
             {/* Logo & App Name */}
@@ -7107,8 +7109,14 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
     onClose();
   };
 
-  const isEmbeddedToolTab = activeTab === 'scheduledTasks' || activeTab === 'mcp' || activeTab === 'agents';
-  const isFullHeightTab = activeTab === 'scheduledTasks' || activeTab === 'agents';
+  const isThemeSkinTab = activeTab === SettingsTab.ThemeSkin;
+  const isEmbeddedToolTab = activeTab === SettingsTab.ScheduledTasks
+    || activeTab === SettingsTab.Mcp
+    || activeTab === SettingsTab.Agents
+    || isThemeSkinTab;
+  const isFullHeightTab = activeTab === SettingsTab.ScheduledTasks
+    || activeTab === SettingsTab.Agents
+    || isThemeSkinTab;
   const contentClassName = isFullHeightTab
     ? 'p-0 flex-1 overflow-hidden'
     : 'px-6 py-4 flex-1 overflow-y-auto';
@@ -7126,9 +7134,9 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
   return (
     <Modal onClose={handleCloseSettings} overlayClassName="fixed inset-0 z-50 modal-backdrop flex items-center justify-center">
       <div
-        className={`relative flex h-[80vh] max-w-[calc(100vw-48px)] rounded-2xl border-border border shadow-modal overflow-hidden modal-content ${
-          isEmbeddedToolTab ? 'w-[1040px]' : 'w-[900px]'
-        }`}
+        className={`relative flex max-w-[calc(100vw-48px)] rounded-2xl border-border border shadow-modal overflow-hidden modal-content ${
+          isThemeSkinTab ? 'w-[1180px]' : isEmbeddedToolTab ? 'w-[1040px]' : 'w-[900px]'
+        } ${isThemeSkinTab ? 'h-[90vh]' : 'h-[80vh]'}`}
         onClick={handleSettingsClick}
       >
         {/* Left sidebar */}
