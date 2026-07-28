@@ -48,9 +48,7 @@
     {
       "from": "resources/tray",
       "to": "tray",
-      "filter": [
-        "**/*"
-      ]
+      "filter": ["**/*"]
     }
   ],
   "protocols": [
@@ -60,10 +58,8 @@
     }
   ],
   "mac": {
-    "target": [
-      "dmg"
-    ],
-    "artifactName": "${productName}.${env.WESIGHT_BUILD_DATE}.mac.${arch}.${ext}",
+    "target": ["dmg"],
+    "artifactName": "${productName}.${env.WESIGHT_RELEASE_VERSION}.mac.${arch}.${ext}",
     "icon": "build/icons/mac/icon.icns",
     "category": "public.app-category.productivity",
     "hardenedRuntime": true,
@@ -121,9 +117,7 @@
   "afterSign": "scripts/notarize.js",
   "afterAllArtifactBuild": "scripts/notarize-dmg.cjs",
   "win": {
-    "target": [
-      "nsis"
-    ],
+    "target": ["nsis"],
     "icon": "build/icons/win/icon.ico",
     "requestedExecutionLevel": "asInvoker",
     "extraResources": [
@@ -138,11 +132,8 @@
     ]
   },
   "linux": {
-    "target": [
-      "AppImage",
-      "deb"
-    ],
-    "artifactName": "${productName}.${env.WESIGHT_BUILD_DATE}.linux.${arch}.${ext}",
+    "target": ["AppImage", "deb"],
+    "artifactName": "${productName}.${env.WESIGHT_RELEASE_VERSION}.linux.${arch}.${ext}",
     "icon": "build/icons/png",
     "category": "Utility",
     "extraResources": [
@@ -188,7 +179,7 @@
     }
   },
   "nsis": {
-    "artifactName": "${productName}.Setup.${env.WESIGHT_BUILD_DATE}.${ext}",
+    "artifactName": "${productName}.Setup.${env.WESIGHT_RELEASE_VERSION}.${ext}",
     "oneClick": false,
     "allowToChangeInstallationDirectory": true,
     "runAfterFinish": true,

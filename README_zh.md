@@ -14,6 +14,7 @@
   <a href="https://github.com/freestylefly/wesight/releases/latest"><img src="https://img.shields.io/github/v/release/freestylefly/wesight?style=flat-square&color=f59e0b" alt="Latest release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/freestylefly/wesight?style=flat-square&color=64748b" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/platform-macOS%20Apple%20Silicon%20%2B%20Intel-111827?style=flat-square&logo=apple&logoColor=white" alt="macOS Apple Silicon 和 Intel">
+  <img src="https://img.shields.io/badge/platform-Windows%20x64-0078d4?style=flat-square&logo=windows11&logoColor=white" alt="Windows x64">
 </p>
 
 <p align="center">
@@ -22,7 +23,7 @@
 
 WeSight 是一个开源桌面 AI Agent 控制台。它可以安装或复用 Claude Code、Codex、Kimi Code、OpenClaw、Hermes Agent、OpenCode、Qwen Code、DeepSeek-TUI 和内置 Agent runtime，把它们统一到一个可视化工作台里，覆盖对话、工具、文件、IM 通道、技能、模型供应商、运行监控和桌面宠物工作流。
 
-> 早期公开版本提供 macOS Apple Silicon 和 Intel 安装包。如果 WeSight 对你的 Agent 工作流有帮助，欢迎点亮 Star，让更多开发者看到这个项目。
+> 公开版本提供完成签名与公证的 macOS Apple Silicon、Intel 安装包，以及 Windows x64 安装程序。如果 WeSight 对你的 Agent 工作流有帮助，欢迎点亮 Star，让更多开发者看到这个项目。
 
 ## 快速入口
 
@@ -140,43 +141,21 @@ WeSight 把模型配置集中在一个设置页。某个引擎选择“跟随 We
 - 官网：[wesight.ai](https://wesight.ai/)
 - 最新版本：[github.com/freestylefly/wesight/releases/latest](https://github.com/freestylefly/wesight/releases/latest)
 
-早期公开版本提供 macOS Apple Silicon 和 Intel 安装包。Release assets 面向最终用户下载。CI artifacts 作为维护者测试构建产物的临时入口。
+每个稳定版本包含完成签名与公证的 macOS Apple Silicon、Intel 安装包、Windows x64 安装程序、更新元数据和 SHA256 校验文件。当前 Windows 安装程序尚未签名，Microsoft Defender SmartScreen 可能显示风险提示。CI artifacts 作为维护者测试构建产物的临时入口。
 
 ## 下载与安装教程
 
-### 1. 下载 DMG 并安装
+### macOS
 
-从 [最新版本](https://github.com/freestylefly/wesight/releases/latest) 下载匹配的 macOS DMG：Apple Silicon 使用 `WeSight-*-mac-arm64.dmg`，Intel 使用 `WeSight-*-mac-x64.dmg`。打开后将 `WeSight.app` 拖入 `Applications` 文件夹。
+从 [最新版本](https://github.com/freestylefly/wesight/releases/latest) 下载匹配的 DMG：Apple Silicon 使用 `WeSight.<version>.mac.arm64.dmg`，Intel 使用 `WeSight.<version>.mac.x64.dmg`。发布流水线会完成签名、公证和 Staple。打开 DMG 后将 `WeSight.app` 拖入 `Applications` 文件夹。
 
 <p align="center">
   <img src="public/readme/tutorial/install-dmg.svg" alt="WeSight DMG 安装示意图" width="760">
 </p>
 
-### 2. 如果 macOS 提示应用已损坏
+### Windows
 
-当前预览版还没有完成 Apple 开发者签名和公证，macOS 可能会显示：
-
-> “WeSight.app” 已损坏，无法打开。你应该将它移到废纸篓。
-
-这通常是 macOS Gatekeeper 对未签名应用添加的隔离提示，不代表安装包真的损坏。请先点击“取消”，不要移到废纸篓。
-
-<p align="center">
-  <img src="public/readme/tutorial/macos-damaged-warning.svg" alt="macOS 未签名应用损坏提示" width="620">
-</p>
-
-### 3. 解除隔离属性并重新打开
-
-打开 macOS 自带的“终端”，输入下面的命令：
-
-```bash
-xattr -cr /Applications/WeSight.app
-```
-
-<p align="center">
-  <img src="public/readme/tutorial/xattr-terminal.svg" alt="在终端执行 xattr 命令" width="760">
-</p>
-
-命令执行完成后，重新打开 WeSight 即可。如果你没有把 WeSight 放到 `Applications` 文件夹，请把命令里的路径换成实际的 `WeSight.app` 路径。
+从同一 Release 下载 `WeSight.Setup.<version>.exe`。当前 Windows x64 安装程序还没有代码签名证书，SmartScreen 可能显示“无法识别的应用”提示。继续安装前请使用 `SHASUMS256.txt` 核对文件。
 
 ## 快速开始
 
@@ -253,6 +232,31 @@ npm run dist:linux
 ```
 
 托管 runtime 元信息在 `package.json` 中声明。生成的 runtime 目录、构建产物、本地密钥和打包输出已加入 Git 忽略。
+
+## 自动发布
+
+`Build Platforms` GitHub Actions 工作流会并行构建 macOS Apple Silicon、macOS Intel 和 Windows x64。手动运行工作流时只做构建验证并上传三个 Actions Artifacts；推送 `v*` Tag 后，三个平台全部成功才会发布 GitHub Release。
+
+发布版本统一使用 SemVer。先通过正常 PR 更新根目录 `package.json` 的版本号，再从干净且与远端同步的 `main` 分支校验并推送 Tag：
+
+```bash
+npm run release:tag -- 1.0.1 --dry-run
+npm run release:tag -- 1.0.1
+```
+
+命令会检查分支、工作区、`origin/main`、包版本，以及本地和远端 Tag。检查通过后创建 annotated `v1.0.1` Tag，并且只推送该 Tag。`1.1.0-rc.1` 等预发布版本会发布为 GitHub Pre-release，稳定版本会设为 Latest。
+
+macOS 签名与公证使用以下 GitHub Actions Secrets：
+
+- `APPLE_ID`
+- `APPLE_APP_PWD`
+- `APPLE_TEAM_ID`
+- `MACOS_CERTIFICATE`
+- `MACOS_CERTIFICATE_PWD`
+
+证书内容和密码不要写入仓库文件或工作流日志。Windows 代码签名会在配置 Windows 签名证书后启用。
+
+如果某个平台失败，可对同一提交或 Tag 重跑失败的 GitHub Actions Jobs。发布任务会等待三个平台，并在 Release 已存在时覆盖同名资产，因此安全重跑会更新现有资产，不会创建重复 Release。
 
 ## 架构概览
 

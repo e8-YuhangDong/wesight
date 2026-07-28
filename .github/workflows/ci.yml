@@ -180,7 +180,8 @@ jobs:
 
   # ========== Stage 7: 测试 (Node.js 内置) ==========
   test:
-    needs: [build-main]
+    needs: [changed-files, lint]
+    if: ${{ needs.changed-files.outputs.main == 'true' || needs.changed-files.outputs.renderer == 'true' || needs.changed-files.outputs.scripts == 'true' || github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

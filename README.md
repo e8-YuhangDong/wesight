@@ -14,6 +14,7 @@
   <a href="https://github.com/freestylefly/wesight/releases/latest"><img src="https://img.shields.io/github/v/release/freestylefly/wesight?style=flat-square&color=f59e0b" alt="Latest release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/github/license/freestylefly/wesight?style=flat-square&color=64748b" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/platform-macOS%20Apple%20Silicon%20%2B%20Intel-111827?style=flat-square&logo=apple&logoColor=white" alt="macOS Apple Silicon and Intel">
+  <img src="https://img.shields.io/badge/platform-Windows%20x64-0078d4?style=flat-square&logo=windows11&logoColor=white" alt="Windows x64">
 </p>
 
 <p align="center">
@@ -22,7 +23,7 @@
 
 WeSight is an open-source desktop control console for local AI agents. It helps you install or reuse Claude Code, Codex, Kimi Code, OpenClaw, Hermes Agent, OpenCode, Qwen Code, DeepSeek-TUI, and the built-in agent runtime, then gives them a visual workspace for chat, tools, files, IM channels, skills, model providers, runtime metrics, and desktop companion workflows.
 
-> Early public releases ship macOS Apple Silicon and Intel builds. If WeSight helps your agent workflow, a Star makes the project easier for more builders to discover.
+> Public releases ship signed and notarized macOS builds for Apple Silicon and Intel, plus a Windows x64 installer. If WeSight helps your agent workflow, a Star makes the project easier for more builders to discover.
 
 ## Quick Links
 
@@ -140,43 +141,21 @@ Public desktop builds are published through GitHub Releases:
 - Website: [wesight.ai](https://wesight.ai/)
 - Latest release: [github.com/freestylefly/wesight/releases/latest](https://github.com/freestylefly/wesight/releases/latest)
 
-Early public releases currently ship macOS Apple Silicon and Intel builds. Release assets are intended for end users. CI artifacts are short-lived build outputs for maintainers to test before a release is published.
+Each stable release includes signed and notarized macOS Apple Silicon and Intel builds, a Windows x64 installer, update metadata, and SHA256 checksums. The Windows installer is currently unsigned and may trigger Microsoft Defender SmartScreen. CI artifacts are short-lived build outputs for maintainers to test before a release is published.
 
 ## Download And Install
 
-### 1. Download the DMG
+### macOS
 
-Download the matching macOS DMG from the [latest release](https://github.com/freestylefly/wesight/releases/latest): `WeSight-*-mac-arm64.dmg` for Apple Silicon or `WeSight-*-mac-x64.dmg` for Intel. Open it and drag `WeSight.app` into the `Applications` folder.
+Download the matching DMG from the [latest release](https://github.com/freestylefly/wesight/releases/latest): `WeSight.<version>.mac.arm64.dmg` for Apple Silicon or `WeSight.<version>.mac.x64.dmg` for Intel. The release workflow signs, notarizes, and staples both packages. Open the DMG and drag `WeSight.app` into the `Applications` folder.
 
 <p align="center">
   <img src="public/readme/tutorial/install-dmg.svg" alt="WeSight DMG install guide" width="760">
 </p>
 
-### 2. If macOS says the app is damaged
+### Windows
 
-Preview builds are not signed and notarized yet. macOS may show a message like:
-
-> “WeSight.app” is damaged and cannot be opened. You should move it to the Trash.
-
-This is usually a Gatekeeper quarantine warning for an unsigned app. It does not mean the downloaded package is corrupted. Click Cancel first.
-
-<p align="center">
-  <img src="public/readme/tutorial/macos-damaged-warning.svg" alt="macOS unsigned app warning" width="620">
-</p>
-
-### 3. Remove the quarantine attribute
-
-Open the built-in macOS Terminal app and run:
-
-```bash
-xattr -cr /Applications/WeSight.app
-```
-
-<p align="center">
-  <img src="public/readme/tutorial/xattr-terminal.svg" alt="Run xattr in Terminal" width="760">
-</p>
-
-After the command finishes, open WeSight again. If you installed WeSight somewhere else, replace `/Applications/WeSight.app` with the actual path to your `WeSight.app`.
+Download `WeSight.Setup.<version>.exe` from the same release. The current Windows x64 installer has no code-signing certificate, so SmartScreen may show an unrecognized app warning. Check the file against `SHASUMS256.txt` before continuing.
 
 ## Quick Start
 
@@ -285,6 +264,31 @@ npm run dist:linux
 ```
 
 Managed runtime metadata is declared in `package.json`. Generated runtime folders, build artifacts, local secrets, and packaged release output are ignored by Git.
+
+## Automated Releases
+
+The `Build Platforms` GitHub Actions workflow builds macOS Apple Silicon, macOS Intel, and Windows x64 in parallel. A manual workflow run performs build-only validation and uploads three Actions Artifacts. A `v*` tag run publishes a GitHub Release after every platform succeeds.
+
+Release versions use SemVer. Update the root `package.json` version through a normal pull request before creating the tag. From a clean, synchronized `main` branch, validate and publish the tag with:
+
+```bash
+npm run release:tag -- 1.0.1 --dry-run
+npm run release:tag -- 1.0.1
+```
+
+The command verifies the branch, working tree, `origin/main`, package version, and local and remote tags. It then creates an annotated `v1.0.1` tag and pushes only that tag. Prerelease versions such as `1.1.0-rc.1` are published as GitHub prereleases; stable versions become the Latest release.
+
+macOS signing and notarization use these GitHub Actions secrets:
+
+- `APPLE_ID`
+- `APPLE_APP_PWD`
+- `APPLE_TEAM_ID`
+- `MACOS_CERTIFICATE`
+- `MACOS_CERTIFICATE_PWD`
+
+Do not put certificate contents or passwords in repository files or workflow logs. Windows signing remains disabled until a Windows code-signing certificate is configured.
+
+If a platform job fails, rerun the failed GitHub Actions jobs for the same commit or tag. The release job waits for all three platforms and uses asset replacement when the release already exists, so a safe rerun updates the existing assets without creating a duplicate release.
 
 ## Architecture
 
