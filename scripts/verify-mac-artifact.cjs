@@ -29,6 +29,8 @@ const PackagedNativePathToken = [
   'win32-x64',
   'arm64-win32',
   'win32-arm64',
+  'ia32-win32',
+  'win32-ia32',
 ];
 
 const rootDir = path.resolve(__dirname, '..');
@@ -43,8 +45,10 @@ function log(message) {
   console.log(`[verify-mac-artifact] ${message}`);
 }
 
-if (!Object.values(MacArtifactTarget).includes(target)) {
-  fail(`Usage: node scripts/verify-mac-artifact.cjs ${MacArtifactTarget.X64}|${MacArtifactTarget.Arm64}`);
+if (require.main === module && !Object.values(MacArtifactTarget).includes(target)) {
+  fail(
+    `Usage: node scripts/verify-mac-artifact.cjs ${MacArtifactTarget.X64}|${MacArtifactTarget.Arm64}`,
+  );
 }
 
 function walk(dir, visitor) {
@@ -72,7 +76,7 @@ function findPackagedApps() {
 }
 
 function runFile(filePath) {
-  const result = runCommand('file', [filePath]);
+  const result = runCommand('file', ['-b', filePath]);
   return (result.stdout || '').trim();
 }
 
@@ -167,9 +171,9 @@ function assertAppleDistributionReady(appPath, expectedArch) {
   log(`Verified Developer ID signing and notarization for ${dmgPath}.`);
 }
 
-function shouldInspectNativeModule(filePath) {
+function shouldInspectNativeModule(filePath, artifactTarget = target) {
   const normalizedPath = filePath.replace(/\\/g, '/');
-  const targetPathTokens = NativeTargetPathToken[target];
+  const targetPathTokens = NativeTargetPathToken[artifactTarget];
   const pathSegments = normalizedPath.split('/');
   const hasTargetToken = (tokens) =>
     tokens.some((token) =>
@@ -188,50 +192,61 @@ function shouldInspectNativeModule(filePath) {
   return !hasTargetToken(PackagedNativePathToken);
 }
 
-const apps = findPackagedApps();
-const expectedArchToken = NativeArchToken[target];
-const appPath = selectApp(apps, expectedArchToken);
-if (!appPath) {
-  fail(`No packaged .app found under ${path.join(rootDir, 'release')}`);
-}
-
-const executablePath = path.join(appPath, 'Contents', 'MacOS', 'WeSight');
-
-log(`Checking ${appPath}`);
-
-if (!fs.existsSync(executablePath)) {
-  fail(`Packaged app executable is missing: ${executablePath}`);
-}
-assertFileHasArch(executablePath, expectedArchToken);
-
-const nativeModules = [];
-const skippedNativeModules = [];
-walk(appPath, (candidate, entry) => {
-  if (!entry.isFile() || !candidate.endsWith('.node')) {
-    return;
+function verifyMacArtifact() {
+  const apps = findPackagedApps();
+  const expectedArchToken = NativeArchToken[target];
+  const appPath = selectApp(apps, expectedArchToken);
+  if (!appPath) {
+    fail(`No packaged .app found under ${path.join(rootDir, 'release')}`);
   }
 
-  if (shouldInspectNativeModule(candidate)) {
-    nativeModules.push(candidate);
-  } else {
-    skippedNativeModules.push(candidate);
+  const executablePath = path.join(appPath, 'Contents', 'MacOS', 'WeSight');
+
+  log(`Checking ${appPath}`);
+
+  if (!fs.existsSync(executablePath)) {
+    fail(`Packaged app executable is missing: ${executablePath}`);
   }
-});
+  assertFileHasArch(executablePath, expectedArchToken);
 
-if (nativeModules.length === 0) {
-  fail('No native .node modules were found in the packaged app.');
+  const nativeModules = [];
+  const skippedNativeModules = [];
+  walk(appPath, (candidate, entry) => {
+    if (!entry.isFile() || !candidate.endsWith('.node')) {
+      return;
+    }
+
+    if (shouldInspectNativeModule(candidate)) {
+      nativeModules.push(candidate);
+    } else {
+      skippedNativeModules.push(candidate);
+    }
+  });
+
+  if (nativeModules.length === 0) {
+    fail('No native .node modules were found in the packaged app.');
+  }
+
+  for (const nativeModule of nativeModules.sort()) {
+    assertFileHasArch(nativeModule, expectedArchToken);
+  }
+
+  log(`Verified ${nativeModules.length} native module(s).`);
+  if (skippedNativeModules.length > 0) {
+    log(`Skipped ${skippedNativeModules.length} non-target vendor native module(s).`);
+  }
+
+  if (process.env.WESIGHT_REQUIRE_APPLE_NOTARIZATION === 'true') {
+    const artifactArch = target === MacArtifactTarget.X64 ? 'x64' : 'arm64';
+    assertAppleDistributionReady(appPath, artifactArch);
+  }
 }
 
-for (const nativeModule of nativeModules.sort()) {
-  assertFileHasArch(nativeModule, expectedArchToken);
+if (require.main === module) {
+  verifyMacArtifact();
 }
 
-log(`Verified ${nativeModules.length} native module(s).`);
-if (skippedNativeModules.length > 0) {
-  log(`Skipped ${skippedNativeModules.length} non-target vendor native module(s).`);
-}
-
-if (process.env.WESIGHT_REQUIRE_APPLE_NOTARIZATION === 'true') {
-  const artifactArch = target === MacArtifactTarget.X64 ? 'x64' : 'arm64';
-  assertAppleDistributionReady(appPath, artifactArch);
-}
+module.exports = {
+  MacArtifactTarget,
+  shouldInspectNativeModule,
+};
