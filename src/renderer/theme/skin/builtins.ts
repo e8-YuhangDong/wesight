@@ -8,6 +8,8 @@ import {
   type ThemeSkinComposition,
 } from '@shared/theme/constants';
 
+import { resolvePublicAssetUrl } from '../../services/publicAssets';
+
 export interface BuiltinThemeSkin {
   id: string;
   nameKey: string;
@@ -77,7 +79,7 @@ const createComposition = (
 
 const cloudridgeAsset = createBuiltinAsset(
   BuiltinThemeSkinId.CloudridgeDawn,
-  '/theme-skins/cloudridge-dawn.webp',
+  resolvePublicAssetUrl('theme-skins/cloudridge-dawn.webp'),
   '#b77949',
   '#d6a46a',
   0.67,
@@ -86,7 +88,7 @@ const cloudridgeAsset = createBuiltinAsset(
 
 const midnightAsset = createBuiltinAsset(
   BuiltinThemeSkinId.MidnightHorizon,
-  '/theme-skins/midnight-horizon.webp',
+  resolvePublicAssetUrl('theme-skins/midnight-horizon.webp'),
   '#315f9f',
   '#3da6b8',
   0.12,
@@ -95,7 +97,7 @@ const midnightAsset = createBuiltinAsset(
 
 const paperAsset = createBuiltinAsset(
   BuiltinThemeSkinId.QuietPaperGarden,
-  '/theme-skins/quiet-paper-garden.webp',
+  resolvePublicAssetUrl('theme-skins/quiet-paper-garden.webp'),
   '#8b9b83',
   '#b68b5a',
   0.88,
