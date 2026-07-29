@@ -27,6 +27,7 @@ import { getContrastProtectionOpacity } from '@shared/theme/imageAnalysis';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 import { i18nService } from '../../services/i18n';
+import { resolvePublicAssetUrl } from '../../services/publicAssets';
 import { themeService } from '../../services/theme';
 import {
   BUILTIN_THEME_SKINS,
@@ -396,7 +397,11 @@ const ThemeSkinSettings: React.FC<ThemeSkinSettingsProps> = ({ readOnly = false 
           <div className="relative flex min-h-[300px]">
             <div className="hidden w-[168px] shrink-0 border-r border-black/10 bg-surface/60 p-4 backdrop-blur-xl sm:block">
               <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <img src="/logo.png" alt="" className="h-6 w-6 rounded-md" />
+                <img
+                  src={resolvePublicAssetUrl('logo.png')}
+                  alt=""
+                  className="h-6 w-6 rounded-md"
+                />
                 WeSight
               </div>
               <div className="mt-5 space-y-2 text-[11px] text-secondary">
@@ -434,7 +439,11 @@ const ThemeSkinSettings: React.FC<ThemeSkinSettingsProps> = ({ readOnly = false 
 
               {previewMode === 'home' ? (
                 <div className="flex flex-1 flex-col items-center justify-center px-8 py-12 text-center">
-                  <img src="/logo.png" alt="" className="h-12 w-12 rounded-xl shadow-lg" />
+                  <img
+                    src={resolvePublicAssetUrl('logo.png')}
+                    alt=""
+                    className="h-12 w-12 rounded-xl shadow-lg"
+                  />
                   <h3 className="mt-3 text-2xl font-semibold text-foreground">
                     {i18nService.t('themeSkinPreviewStart')}
                   </h3>
