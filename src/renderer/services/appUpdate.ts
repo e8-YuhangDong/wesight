@@ -42,7 +42,11 @@ type GitHubReleaseResponse = {
   assets?: GitHubReleaseAsset[];
 };
 
-export type ChangeLogEntry = { title: string; content: string[] };
+export type ChangeLogEntry = {
+  title: string;
+  summary: string;
+  content: string[];
+};
 
 export interface AppUpdateDownloadProgress {
   received: number;
@@ -100,6 +104,74 @@ const isNewerVersion = (latestVersion: string, currentVersion: string): boolean 
   compareVersions(latestVersion, currentVersion) > 0
 );
 
+const stripInlineMarkdown = (value: string): string => (
+  value
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+    .replace(/[*_`~]/g, '')
+    .trim()
+);
+
+const isGenericReleaseHeading = (value: string): boolean => (
+  /^(?:what'?s changed|更新内容|更新日志)$/i.test(value.trim())
+);
+
+export const parseGitHubReleaseNotes = (
+  body: string | undefined,
+  fallbackTitle: string,
+): ChangeLogEntry => {
+  let title = fallbackTitle;
+  let summary = '';
+  const content: string[] = [];
+
+  for (const rawLine of (body || '').split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith('>') || /^<!--/.test(line)) {
+      continue;
+    }
+
+    const headingMatch = line.match(/^##\s+(.+)$/);
+    if (headingMatch) {
+      const heading = stripInlineMarkdown(headingMatch[1]);
+      if (!isGenericReleaseHeading(heading)) {
+        title = heading.replace(/^WeSight\s+v?[\w.+-]+\s*[·:：-]\s*/i, '').trim() || title;
+      }
+      continue;
+    }
+
+    if (/^###\s+/.test(line)) {
+      continue;
+    }
+
+    const listItemMatch = line.match(/^[-*]\s+(.+)$/);
+    if (listItemMatch) {
+      const item = stripInlineMarkdown(listItemMatch[1])
+        .replace(/\s+by\s+@\S+.*$/i, '')
+        .trim();
+      if (item) {
+        content.push(item);
+      }
+      continue;
+    }
+
+    if (
+      /完整(?:代码)?差异|完整更新对比|full changelog/i.test(line) ||
+      /^\[[^\]]+\]\(https:\/\/github\.com\/[^)]+\/compare\//i.test(line)
+    ) {
+      continue;
+    }
+
+    if (!summary) {
+      summary = stripInlineMarkdown(line);
+    }
+  }
+
+  return {
+    title,
+    summary,
+    content: content.slice(0, 12),
+  };
+};
+
 type UpdateValue = NonNullable<NonNullable<UpdateApiResponse['data']>['value']>;
 
 const getPlatformDownloadUrl = (value: UpdateValue | undefined): string | null => {
@@ -152,14 +224,9 @@ const parseGitHubReleaseUpdate = (
     return null;
   }
 
-  const bodyLines = (payload.body || '')
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line && !/^#+\s*/.test(line))
-    .slice(0, 12);
-  const title = payload.name?.trim() || payload.tag_name?.trim() || latestVersion;
+  const fallbackTitle = payload.name?.trim() || payload.tag_name?.trim() || latestVersion;
   const date = payload.published_at?.slice(0, 10) || '';
-  const entry = { title, content: bodyLines };
+  const entry = parseGitHubReleaseNotes(payload.body, fallbackTitle);
   const downloadUrl = getGitHubDownloadUrl(payload);
   if (!downloadUrl) {
     console.warn(`[AppUpdate] release ${latestVersion} has no valid WeSight installer for ${window.electron.platform}/${window.electron.arch}`);
@@ -224,6 +291,7 @@ export const checkForAppUpdate = async (currentVersion: string, manual?: boolean
 
   const toEntry = (log?: ChangeLogLang): ChangeLogEntry => ({
     title: typeof log?.title === 'string' ? log.title : '',
+    summary: '',
     content: Array.isArray(log?.content) ? log.content : [],
   });
 

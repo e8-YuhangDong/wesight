@@ -105,3 +105,57 @@ test('checkForAppUpdate ignores releases without a WeSight installer asset', asy
 
   await expect(checkForAppUpdate('2026.6.1')).resolves.toBeNull();
 });
+
+test('checkForAppUpdate converts Chinese GitHub Markdown into clean client release notes', async () => {
+  const fetchMock = window.electron.api.fetch as ReturnType<typeof vi.fn>;
+  fetchMock.mockResolvedValue({
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    headers: {},
+    data: {
+      tag_name: 'v1.0.4',
+      name: 'v1.0.4',
+      published_at: '2026-07-30T00:00:00Z',
+      body: [
+        '> [!WARNING]',
+        '> Windows x64 安装包当前尚未签名。',
+        '',
+        '## WeSight v1.0.4 · 更新体验优化',
+        '',
+        '本次更新让版本信息更清晰。',
+        '',
+        '### 优化',
+        '',
+        '- 官网、GitHub Release 与客户端统一使用中文更新日志',
+        '- 清理客户端中的 Markdown 标记',
+        '',
+        '[查看 v1.0.4 的完整代码差异](https://github.com/freestylefly/wesight/compare/v1.0.3...v1.0.4)',
+      ].join('\n'),
+      assets: [
+        {
+          name: 'WeSight.Setup.1.0.4.exe',
+          browser_download_url: 'https://example.com/WeSight.Setup.1.0.4.exe',
+        },
+      ],
+    },
+  });
+
+  await expect(checkForAppUpdate('1.0.3')).resolves.toMatchObject({
+    latestVersion: '1.0.4',
+    changeLog: {
+      zh: {
+        title: '更新体验优化',
+        summary: '本次更新让版本信息更清晰。',
+        content: [
+          '官网、GitHub Release 与客户端统一使用中文更新日志',
+          '清理客户端中的 Markdown 标记',
+        ],
+      },
+      en: {
+        title: '更新体验优化',
+        summary: '本次更新让版本信息更清晰。',
+      },
+    },
+  });
+});

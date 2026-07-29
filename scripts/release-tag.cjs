@@ -3,6 +3,7 @@
 
 const { spawnSync } = require('child_process');
 
+const { getReleaseNotesEntry, readReleaseNotes } = require('./render-release-notes.cjs');
 const { parseReleaseVersion, readPackageVersion } = require('./release-version.cjs');
 
 function parseArguments(args) {
@@ -59,6 +60,8 @@ function runReleaseTag({
       `Requested version ${metadata.version} does not match package.json version ${normalizedPackageVersion}.`,
     );
   }
+
+  getReleaseNotesEntry(metadata.version, readReleaseNotes(projectRoot));
 
   const branch = git(['branch', '--show-current']).stdout.trim();
   if (branch !== 'main') {

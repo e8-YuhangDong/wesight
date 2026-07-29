@@ -76,6 +76,7 @@
     "website:build": "npm --prefix website run build",
     "website:preview": "npm --prefix website run preview",
     "website:test": "npm --prefix website run test",
+    "release:notes": "node scripts/render-release-notes.cjs",
     "release:tag": "node scripts/release-tag.cjs",
     "compile:electron": "tsc --project electron-tsconfig.json",
     "precompile:electron": "electron-builder install-app-deps",
