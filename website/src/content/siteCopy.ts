@@ -64,6 +64,7 @@ export type Copy = {
       engines: string;
       skills: string;
       openSource: string;
+      changelog: string;
       docs: string;
     };
     download: string;
@@ -130,6 +131,25 @@ export type Copy = {
     body: string;
     items: Array<{ title: string; body: string }>;
   };
+  changelog: {
+    metaTitle: string;
+    metaDescription: string;
+    eyebrow: string;
+    title: string;
+    body: string;
+    latest: string;
+    download: string;
+    githubRelease: string;
+    filterLabel: string;
+    filters: {
+      all: string;
+      desktop: string;
+      website: string;
+      release: string;
+    };
+    versionLabel: string;
+    viewRelease: string;
+  };
   final: {
     title: string;
     body: string;
@@ -165,6 +185,7 @@ export const copy: Record<Language, Copy> = {
         engines: 'Engines',
         skills: 'Skills',
         openSource: 'Open Source',
+        changelog: 'Changelog',
         docs: 'Docs',
       },
       download: 'Download',
@@ -318,6 +339,26 @@ export const copy: Record<Language, Copy> = {
         },
       ],
     },
+    changelog: {
+      metaTitle: 'WeSight Changelog - Chinese Product Updates',
+      metaDescription:
+        'Read the latest WeSight desktop, website, and release pipeline updates in Chinese.',
+      eyebrow: 'Product updates',
+      title: '更新日志',
+      body: '感谢你跟随 WeSight 一路前进。这里集中记录桌面客户端、官网与发布流程的每一次更新。',
+      latest: 'Latest',
+      download: 'Download latest',
+      githubRelease: 'GitHub Release',
+      filterLabel: 'Filter release notes',
+      filters: {
+        all: 'All updates',
+        desktop: 'Desktop',
+        website: 'Website',
+        release: 'Release pipeline',
+      },
+      versionLabel: 'WeSight',
+      viewRelease: 'View release details',
+    },
     final: {
       title: 'Download WeSight and start your desktop agent workflow',
       body: 'Get the latest desktop build from GitHub Releases, or read the source and README directly.',
@@ -352,6 +393,7 @@ export const copy: Record<Language, Copy> = {
         engines: '引擎',
         skills: '技能',
         openSource: '开源',
+        changelog: '更新日志',
         docs: '文档',
       },
       download: '下载',
@@ -493,6 +535,25 @@ export const copy: Record<Language, Copy> = {
           body: 'OpenClaw 和 Hermes runtime 由 WeSight 准备和维护。',
         },
       ],
+    },
+    changelog: {
+      metaTitle: 'WeSight 更新日志 - 产品版本记录',
+      metaDescription: '查看 WeSight 桌面客户端、官网与发布流程的中文更新日志。',
+      eyebrow: '产品动态',
+      title: '更新日志',
+      body: '感谢你跟随 WeSight 一路前进。这里集中记录桌面客户端、官网与发布流程的每一次更新。',
+      latest: '最新版本',
+      download: '下载最新版本',
+      githubRelease: 'GitHub Release',
+      filterLabel: '筛选更新日志',
+      filters: {
+        all: '全部更新',
+        desktop: '桌面客户端',
+        website: '官网',
+        release: '发布流程',
+      },
+      versionLabel: 'WeSight',
+      viewRelease: '查看发布详情',
     },
     final: {
       title: '下载 WeSight，开始你的桌面 Agent 工作流',

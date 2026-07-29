@@ -18,7 +18,6 @@ import {
   heroStats,
   logoUrl,
   productImages,
-  releaseUrl,
   repoUrl,
 } from '../content/siteCopy';
 import { DownloadMenu } from './DownloadMenu';
@@ -43,6 +42,7 @@ export function Header({
         <a href="/#engines">{t.header.nav.engines}</a>
         <a href="/#skills">{t.header.nav.skills}</a>
         <a href="/#open-source">{t.header.nav.openSource}</a>
+        <Link href="/changelog">{t.header.nav.changelog}</Link>
         <a href={docsUrl}>{t.header.nav.docs}</a>
       </nav>
       <div className="header-actions">
@@ -358,7 +358,7 @@ export function SiteFooter({ t }: { t: Copy }) {
         <Link href="/pricing">{t.final.footerNav.pricing}</Link>
         <Link href="/profile">{t.final.footerNav.profile}</Link>
         <a href={docsUrl}>{t.final.footerNav.docs}</a>
-        <a href={releaseUrl}>{t.final.footerNav.releases}</a>
+        <Link href="/changelog">{t.final.footerNav.releases}</Link>
         <a href={repoUrl}>{t.final.footerNav.github}</a>
         <a href="mailto:hello@wesight.ai">{t.final.footerNav.contact}</a>
       </nav>

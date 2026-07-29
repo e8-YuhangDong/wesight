@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { AppUpdateDownloadProgress,AppUpdateInfo } from '../../services/appUpdate';
+import type { AppUpdateDownloadProgress, AppUpdateInfo } from '../../services/appUpdate';
 import { i18nService } from '../../services/i18n';
 import Modal from '../common/Modal';
 
@@ -40,7 +40,7 @@ const AppUpdateModal: React.FC<AppUpdateModalProps> = ({
 }) => {
   const { latestVersion, date, changeLog } = updateInfo;
   const lang = i18nService.getLanguage();
-  const currentLog = changeLog?.[lang] ?? { title: '', content: [] };
+  const currentLog = changeLog?.[lang] ?? { title: '', summary: '', content: [] };
   const isDismissible = modalState === 'info' || modalState === 'error';
 
   return (
@@ -59,6 +59,12 @@ const AppUpdateModal: React.FC<AppUpdateModalProps> = ({
               {currentLog.title && (
                 <p className="mt-3 text-sm font-medium text-foreground">
                   {currentLog.title}
+                </p>
+              )}
+
+              {currentLog.summary && (
+                <p className="mt-1.5 text-sm leading-6 text-secondary">
+                  {currentLog.summary}
                 </p>
               )}
 

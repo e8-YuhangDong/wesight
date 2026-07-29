@@ -151,6 +151,17 @@ describe('release tag command', () => {
     ).toThrow('does not match package.json version 1.0.1');
   });
 
+  test('rejects a release without prepared Chinese notes', () => {
+    const { git } = createGit();
+    expect(() =>
+      runReleaseTag({
+        requestedVersion: '9.9.9',
+        packageVersion: '9.9.9',
+        git,
+      }),
+    ).toThrow('No Chinese release notes found for v9.9.9');
+  });
+
   test('rejects a dirty working tree', () => {
     const { git } = createGit({ dirty: true });
     expect(() =>

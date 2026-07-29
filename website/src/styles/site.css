@@ -146,7 +146,7 @@ section,
   min-width: 0;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 20px;
   color: var(--muted-strong);
   font-size: 13px;
   font-weight: 680;
