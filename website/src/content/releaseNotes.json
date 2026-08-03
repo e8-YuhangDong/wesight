@@ -3,6 +3,64 @@
   "windowsUnsignedNotice": "Windows x64 安装包当前尚未签名。安装时，Microsoft Defender SmartScreen 可能显示“Windows 已保护你的电脑”，请确认安装包来自 WeSight 官方 GitHub Release 后继续安装。",
   "releases": [
     {
+      "version": "1.0.4",
+      "date": "2026-08-03",
+      "title": "跟随本机 Claude Code 配置",
+      "summary": "Claude Code 选择「跟随本机配置」时，改为直接读取本机实际生效的配置，并且不再写入任何本机配置文件。",
+      "compareUrl": "https://github.com/freestylefly/wesight/compare/v1.0.3...v1.0.4",
+      "releaseUrl": "https://github.com/freestylefly/wesight/releases/tag/v1.0.4",
+      "sections": [
+        {
+          "kind": "fix",
+          "title": "修复",
+          "items": [
+            {
+              "text": "修复在 cc-switch 中删除或切换服务商后，WeSight 仍显示旧配置的问题",
+              "areas": [
+                "desktop"
+              ]
+            },
+            {
+              "text": "修复恢复历史会话时可能覆盖本机 Claude Code 配置的问题",
+              "areas": [
+                "desktop"
+              ]
+            },
+            {
+              "text": "模型名称改为显示实际生效的型号，opus 等简写会解析为具体型号",
+              "areas": [
+                "desktop"
+              ]
+            }
+          ]
+        },
+        {
+          "kind": "improvement",
+          "title": "优化",
+          "items": [
+            {
+              "text": "「跟随本机配置」模式下 WeSight 不再写入 ~/.claude/settings.json 或 cc-switch 数据，仅读取",
+              "areas": [
+                "desktop"
+              ]
+            },
+            {
+              "text": "按 Claude Code 自身的优先级读取配置，支持项目级配置与 CLAUDE_CONFIG_DIR",
+              "areas": [
+                "desktop"
+              ]
+            },
+            {
+              "text": "该模式下的服务商切换器改为只读的当前生效配置摘要",
+              "areas": [
+                "desktop"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
       "version": "1.0.3",
       "date": "2026-07-29",
       "title": "主题资源修复",
@@ -16,11 +74,15 @@
           "items": [
             {
               "text": "修复正式安装包中主题皮肤资源无法加载的问题",
-              "areas": ["desktop"]
+              "areas": [
+                "desktop"
+              ]
             },
             {
               "text": "恢复打包后自定义皮肤与主题资源的正常显示",
-              "areas": ["desktop"]
+              "areas": [
+                "desktop"
+              ]
             }
           ]
         }
@@ -40,11 +102,15 @@
           "items": [
             {
               "text": "官网新增 Windows x64 下载入口，并自动匹配最新正式安装包",
-              "areas": ["website"]
+              "areas": [
+                "website"
+              ]
             },
             {
               "text": "加入品牌化 macOS 安装界面，清晰展示应用与 Applications 文件夹",
-              "areas": ["desktop"]
+              "areas": [
+                "desktop"
+              ]
             }
           ]
         },
@@ -54,7 +120,9 @@
           "items": [
             {
               "text": "修复 macOS Intel 发布产物校验不稳定的问题",
-              "areas": ["release"]
+              "areas": [
+                "release"
+              ]
             }
           ]
         }
@@ -74,15 +142,21 @@
           "items": [
             {
               "text": "将 WeSight 官网源码并入主仓库统一维护",
-              "areas": ["website"]
+              "areas": [
+                "website"
+              ]
             },
             {
               "text": "官网下载入口自动获取 GitHub 最新正式版安装包",
-              "areas": ["website"]
+              "areas": [
+                "website"
+              ]
             },
             {
               "text": "上线由版本标签驱动的 macOS 与 Windows 自动发布流程",
-              "areas": ["release"]
+              "areas": [
+                "release"
+              ]
             }
           ]
         }
@@ -102,11 +176,16 @@
           "items": [
             {
               "text": "新增可定制背景皮肤，并持久化保存主题设置",
-              "areas": ["desktop"]
+              "areas": [
+                "desktop"
+              ]
             },
             {
               "text": "提供 Apple Silicon 与 Intel 两种经过 Apple 签名、公证的 macOS 安装包",
-              "areas": ["desktop", "release"]
+              "areas": [
+                "desktop",
+                "release"
+              ]
             }
           ]
         },
@@ -116,7 +195,9 @@
           "items": [
             {
               "text": "加强发布产物校验、CI 检查与 OpenSquilla 侧边栏模式覆盖",
-              "areas": ["release"]
+              "areas": [
+                "release"
+              ]
             }
           ]
         }
