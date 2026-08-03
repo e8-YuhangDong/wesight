@@ -552,7 +552,7 @@ export class ExternalCliRuntimeAdapter extends EventEmitter implements CoworkRun
     const configSource = this.getConfigSource();
     const selectedProvider = this.getSelectedProviderForLocalCli();
     if (this.engine === CoworkAgentEngine.ClaudeCode && configSource === ExternalAgentConfigSource.LocalCli) {
-      localClaudeConfig = applyLocalClaudeCodeEnvForPrintMode(env, selectedProvider);
+      localClaudeConfig = applyLocalClaudeCodeEnvForPrintMode(env, { cwd });
     }
     if (this.engine === CoworkAgentEngine.Codex && configSource === ExternalAgentConfigSource.LocalCli) {
       cleanupWesightManagedCodexConfig();
@@ -648,7 +648,7 @@ export class ExternalCliRuntimeAdapter extends EventEmitter implements CoworkRun
       });
       console.log(
         '[ExternalCliRuntimeAdapter] Claude Code config diagnostics.',
-        buildClaudeCodeConfigDiagnostics(env, selectedProvider),
+        buildClaudeCodeConfigDiagnostics(env, { cwd }),
       );
     }
     if (this.engine === CoworkAgentEngine.Codex) {
@@ -1628,7 +1628,9 @@ export class ExternalCliRuntimeAdapter extends EventEmitter implements CoworkRun
       return null;
     }
     if (this.engine === CoworkAgentEngine.ClaudeCode) {
-      return this.getCurrentProvider?.('claude') ?? null;
+      // Claude Code reads the machine's own settings chain in this mode, so no
+      // stored provider is consulted.
+      return null;
     }
     if (this.engine === CoworkAgentEngine.Codex) {
       return null;
@@ -2259,7 +2261,7 @@ export class ExternalCliRuntimeAdapter extends EventEmitter implements CoworkRun
       config.sourceName,
       config.model,
       config.baseUrl,
-      config.credentialSource,
+      config.credentialSource ?? (config.usesOfficialLogin ? 'official login' : ''),
     ].filter(Boolean);
     return details.join(' · ');
   }

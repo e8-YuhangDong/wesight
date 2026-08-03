@@ -295,6 +295,7 @@ export const CoworkIpcChannel = {
   AgentProvidersDelete: 'cowork:agentProviders:delete',
   AgentProvidersSetCurrent: 'cowork:agentProviders:setCurrent',
   AgentProvidersImportLive: 'cowork:agentProviders:importLive',
+  ClaudeCodeLiveConfigGet: 'cowork:claudeCodeLiveConfig:get',
   AgentConfigImportLocalToModelSettings: 'cowork:agentConfig:importLocalToModelSettings',
   AgentConfigSyncOpenClawGlobal: 'cowork:agentConfig:syncOpenClawGlobal',
   AgentConfigSyncOpenCodeGlobal: 'cowork:agentConfig:syncOpenCodeGlobal',

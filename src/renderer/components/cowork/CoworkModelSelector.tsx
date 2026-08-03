@@ -13,6 +13,7 @@ import { coworkService } from '../../services/cowork';
 import { i18nService } from '../../services/i18n';
 import type { RootState } from '../../store';
 import type {
+  ClaudeCodeLiveConfigSnapshot,
   ExternalAgentProvider,
   ExternalAgentProviderAppType,
   ExternalAgentProviderListResult,
@@ -126,8 +127,14 @@ const CoworkModelSelector: React.FC<CoworkModelSelectorProps> = ({
   const [switchingProviderId, setSwitchingProviderId] = React.useState<string | null>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
 
+  // Claude Code following the local CLI has no provider to switch between: the
+  // machine's own settings decide, so the chip is a read-only label.
+  const isClaudeLocalConfig = resolvedEngine === CoworkAgentEngine.ClaudeCode
+    && config.claudeCodeConfigSource === ExternalAgentConfigSource.LocalCli;
+  const [claudeLiveConfig, setClaudeLiveConfig] = React.useState<ClaudeCodeLiveConfigSnapshot | null>(null);
+
   const loadProviders = React.useCallback(async () => {
-    if (!appType || readOnly) return;
+    if (!appType || readOnly || isClaudeLocalConfig) return;
     setIsLoading(true);
     try {
       const result = await coworkService.listAgentProviders(appType);
@@ -168,6 +175,20 @@ const CoworkModelSelector: React.FC<CoworkModelSelectorProps> = ({
   }, [isOpen]);
 
   React.useEffect(() => {
+    if (!isClaudeLocalConfig || readOnly) return;
+    let cancelled = false;
+    void (async () => {
+      const result = await coworkService.getClaudeCodeLiveConfig();
+      if (!cancelled) {
+        setClaudeLiveConfig(result.success ? result.snapshot ?? null : null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isClaudeLocalConfig, readOnly]);
+
+  React.useEffect(() => {
     if (!appType) return;
     const handleOpenModelSelector = () => {
       setIsOpen(true);
@@ -196,6 +217,21 @@ const CoworkModelSelector: React.FC<CoworkModelSelectorProps> = ({
         title={i18nService.t('coworkAgentCodexAppModelSourceValue')}
       >
         {i18nService.t('coworkAgentCodexAppModelSourceValue')}
+      </div>
+    );
+  }
+
+  if (isClaudeLocalConfig) {
+    const label = claudeLiveConfig?.resolvedModel || i18nService.t('coworkAgentClaudeLiveConfigModelDefault');
+    const source = claudeLiveConfig?.configPath || claudeLiveConfig?.sourceName || '';
+    return (
+      <div
+        className="max-w-[260px] truncate rounded-xl bg-surface px-3 py-1.5 text-sm font-medium text-foreground"
+        title={source
+          ? `${i18nService.t('coworkAgentClaudeLiveConfigSource')}: ${source}`
+          : i18nService.t('coworkAgentClaudeLiveConfigTitle')}
+      >
+        {label}
       </div>
     );
   }

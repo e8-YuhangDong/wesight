@@ -155,6 +155,7 @@ import {
   type ExternalAgentProviderAppType,
   type ExternalAgentProviderInput,
   ExternalAgentProviderStore,
+  setExternalAgentConfigSourceGetter,
 } from './libs/externalAgentProviderStore';
 import {
   getFeishuRuntimeOwnershipStatus,
@@ -1219,9 +1220,26 @@ const startCoworkFileActivityForSession = (sessionId: string): void => {
   }
 };
 
+const getConfigSourceForAppType = (
+  appType: ExternalAgentProviderAppType,
+): ExternalAgentConfigSource => {
+  const config = getCoworkStore().getConfig();
+  if (appType === 'claude') return config.claudeCodeConfigSource;
+  if (appType === 'codex') return config.codexConfigSource;
+  if (appType === 'hermes') return config.hermesConfigSource;
+  if (appType === 'opencode') return config.opencodeConfigSource;
+  if (appType === 'qwen') return config.qwenCodeConfigSource;
+  if (appType === 'deepseek_tui') return config.deepseekTuiConfigSource;
+  if (appType === 'opensquilla') return config.opensquillaConfigSource;
+  if (appType === 'kimi') return config.kimiCodeConfigSource;
+  if (appType === 'grok') return ExternalAgentConfigSource.LocalCli;
+  return ExternalAgentConfigSource.WesightModel;
+};
+
 const getExternalAgentProviderStore = (): ExternalAgentProviderStore => {
   if (!externalAgentProviderStore) {
     externalAgentProviderStore = new ExternalAgentProviderStore(getStore().getDatabase());
+    setExternalAgentConfigSourceGetter(getConfigSourceForAppType);
   }
   return externalAgentProviderStore;
 };
@@ -1268,6 +1286,7 @@ const resolveRuntimeModelSnapshot = (
   options: {
     configSource?: string | null;
     modelOverride?: CoworkModelOverride | null;
+    cwd?: string | null;
   } = {},
 ): RuntimeModelSnapshot => {
   const configSource = options.configSource ?? getConfigSourceForEngine(engine);
@@ -1282,17 +1301,21 @@ const resolveRuntimeModelSnapshot = (
   }
   const appType = getExternalProviderAppTypeForEngine(engine);
   if (appType && configSource === ExternalAgentConfigSource.LocalCli) {
-    const provider = getExternalAgentProviderStore().getCurrentProvider(appType);
+    // Claude Code in local-CLI mode follows the machine's live settings chain
+    // only: no stored provider is consulted, so cc-switch edits and deletions
+    // take effect immediately and nothing is written back.
     if (engine === CoworkAgentEngineValue.ClaudeCode) {
-      const localClaudeConfig = resolveLocalClaudeCodeConfigSnapshot(provider);
+      const cwd = options.cwd || getCoworkStore().getConfig().workingDirectory || os.homedir();
+      const localClaudeConfig = resolveLocalClaudeCodeConfigSnapshot({ cwd });
       return {
-        providerKey: localClaudeConfig?.sourceType === 'selected_provider' ? provider?.id ?? null : null,
-        providerName: localClaudeConfig?.sourceName ?? provider?.name ?? null,
-        modelId: localClaudeConfig?.model || provider?.summary.model?.trim() || null,
-        modelName: localClaudeConfig?.model || provider?.summary.model?.trim() || null,
+        providerKey: null,
+        providerName: localClaudeConfig?.sourceName ?? null,
+        modelId: localClaudeConfig?.resolvedModel || null,
+        modelName: localClaudeConfig?.resolvedModel || null,
         configSource,
       };
     }
+    const provider = getExternalAgentProviderStore().getCurrentProvider(appType);
     return {
       providerKey: provider?.id ?? null,
       providerName: provider?.name ?? null,
@@ -1361,6 +1384,7 @@ const resolveSessionRuntimeSnapshot = (
   options: {
     configSource?: string | null;
     modelOverride?: CoworkModelOverride | null;
+    cwd?: string | null;
   } = {},
 ): CoworkSessionRuntimeSnapshot => {
   const model = resolveRuntimeModelSnapshot(engine, options);
@@ -1398,6 +1422,11 @@ const resolveSessionRuntimeSnapshot = (
 
 const restoreRuntimeSnapshotProvider = (snapshot?: CoworkSessionRuntimeSnapshot | null): void => {
   if (!snapshot || snapshot.configSource !== ExternalAgentConfigSource.LocalCli || !snapshot.providerKey) {
+    return;
+  }
+  // Claude Code follows the machine's live config in this mode, so resuming an
+  // old session must not pin (or write back) a provider captured earlier.
+  if (snapshot.agentEngine === CoworkAgentEngineValue.ClaudeCode) {
     return;
   }
   const appType = getExternalProviderAppTypeForEngine(snapshot.agentEngine);
@@ -5848,6 +5877,20 @@ if (!gotTheLock) {
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to import local agent provider',
+      };
+    }
+  });
+
+  ipcMain.handle(CoworkIpcChannel.ClaudeCodeLiveConfigGet, async (_event, input: { cwd?: unknown }) => {
+    try {
+      const requestedCwd = typeof input?.cwd === 'string' ? input.cwd.trim() : '';
+      const cwd = requestedCwd || getCoworkStore().getConfig().workingDirectory || os.homedir();
+      const snapshot = resolveLocalClaudeCodeConfigSnapshot({ cwd });
+      return { success: true, snapshot };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to read the local Claude Code config',
       };
     }
   });

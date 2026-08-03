@@ -467,6 +467,8 @@ contextBridge.exposeInMainWorld('electron', {
       ipcRenderer.invoke(CoworkIpcChannel.AgentProvidersSetCurrent, input),
     importLiveAgentProvider: (appType: 'claude' | 'codex' | 'hermes' | 'openclaw' | 'opencode' | 'grok' | 'qwen' | 'deepseek_tui') =>
       ipcRenderer.invoke(CoworkIpcChannel.AgentProvidersImportLive, { appType }),
+    getClaudeCodeLiveConfig: (input?: { cwd?: string }) =>
+      ipcRenderer.invoke(CoworkIpcChannel.ClaudeCodeLiveConfigGet, input ?? {}),
     importLocalAgentConfigToModelSettings: (appType: 'claude' | 'codex' | 'hermes' | 'openclaw' | 'opencode' | 'grok' | 'qwen' | 'deepseek_tui') =>
       ipcRenderer.invoke(CoworkIpcChannel.AgentConfigImportLocalToModelSettings, { appType }),
     syncOpenClawGlobalConfig: () =>

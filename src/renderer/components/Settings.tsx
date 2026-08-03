@@ -48,6 +48,7 @@ import { themeService } from '../services/theme';
 import { RootState } from '../store';
 import { setAvailableModels } from '../store/slices/modelSlice';
 import type {
+  ClaudeCodeLiveConfigSnapshot,
   ClaudeCodePermissionMode,
   CoworkAgentEngine,
   CoworkMemoryStats,
@@ -1265,6 +1266,8 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
   const [agentProviderLists, setAgentProviderLists] = useState<Partial<Record<ExternalAgentProviderAppType, ExternalAgentProviderListResult>>>({});
   const [agentProviderLoadingAppType, setAgentProviderLoadingAppType] = useState<ExternalAgentProviderAppType | null>(null);
   const [agentProviderSwitchingId, setAgentProviderSwitchingId] = useState<string | null>(null);
+  const [claudeLiveConfig, setClaudeLiveConfig] = useState<ClaudeCodeLiveConfigSnapshot | null>(null);
+  const [claudeLiveConfigLoading, setClaudeLiveConfigLoading] = useState(false);
 
   const selectedExternalAgentAppType = useMemo<ExternalAgentProviderAppType | null>(() => {
     if (coworkAgentEngine === CoworkAgentEngineValue.ClaudeCode) return 'claude';
@@ -1371,6 +1374,9 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
   }, []);
 
   const loadAgentProviders = useCallback(async (appType: ExternalAgentProviderAppType) => {
+    // WeSight keeps no provider records for Claude Code; its panel reads the
+    // machine's live config instead.
+    if (appType === 'claude') return { success: true } as ExternalAgentProviderListResult;
     setAgentProviderLoadingAppType(appType);
     try {
       const result = await measureSettingsIpc(`cowork:agentProviders:list:${appType}`, () => coworkService.listAgentProviders(appType));
@@ -1383,6 +1389,19 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
       return result;
     } finally {
       setAgentProviderLoadingAppType((current) => (current === appType ? null : current));
+    }
+  }, [measureSettingsIpc]);
+
+  const loadClaudeLiveConfig = useCallback(async () => {
+    setClaudeLiveConfigLoading(true);
+    try {
+      const result = await measureSettingsIpc(
+        'cowork:claudeCodeLiveConfig:get',
+        () => coworkService.getClaudeCodeLiveConfig(),
+      );
+      setClaudeLiveConfig(result.success ? result.snapshot ?? null : null);
+    } finally {
+      setClaudeLiveConfigLoading(false);
     }
   }, [measureSettingsIpc]);
 
@@ -4136,6 +4155,16 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
     selectedExternalAgentAppType,
   ]);
 
+  // Claude Code in local-CLI mode shows the machine's live config instead of a
+  // provider switcher, so it is read fresh whenever that panel becomes visible.
+  const isClaudeLocalConfigMode = selectedExternalAgentAppType === 'claude'
+    && selectedAgentConfigSource === ExternalAgentConfigSourceValue.LocalCli;
+
+  useEffect(() => {
+    if (activeTab !== SettingsTab.CoworkAgentEngine || !isClaudeLocalConfigMode) return;
+    void loadClaudeLiveConfig();
+  }, [activeTab, isClaudeLocalConfigMode, loadClaudeLiveConfig]);
+
   const setSelectedAgentConfigSource = (source: ExternalAgentConfigSource) => {
     if (isSaving) return;
     if (selectedExternalAgentAppType === 'claude') {
@@ -4203,6 +4232,17 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
   }, [activeProvider, providers]);
 
   const effectiveAgentModelSummary = useMemo(() => {
+    if (isClaudeLocalConfigMode) {
+      return {
+        providerKey: null,
+        providerName: claudeLiveConfig?.configPath
+          || claudeLiveConfig?.sourceName
+          || i18nService.t('coworkAgentClaudeLiveConfigEmpty'),
+        modelId: claudeLiveConfig?.resolvedModel || i18nService.t('coworkAgentClaudeLiveConfigModelDefault'),
+        apiFormat: 'anthropic',
+        baseUrl: claudeLiveConfig?.baseUrl || '',
+      };
+    }
     if (selectedAgentConfigSource === ExternalAgentConfigSourceValue.LocalCli && selectedAgentProvider) {
       return {
         providerKey: selectedAgentProvider.id,
@@ -4213,7 +4253,14 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
       };
     }
     return currentModelSummary;
-  }, [currentModelSummary, selectedAgentConfigSource, selectedAgentProvider, selectedExternalAgentAppType]);
+  }, [
+    claudeLiveConfig,
+    currentModelSummary,
+    isClaudeLocalConfigMode,
+    selectedAgentConfigSource,
+    selectedAgentProvider,
+    selectedExternalAgentAppType,
+  ]);
 
   const handleSelectAgentProvider = async (providerId: string) => {
     if (!selectedExternalAgentAppType || !providerId || agentProviderSwitchingId) return;
@@ -4777,7 +4824,73 @@ const Settings: React.FC<SettingsProps> = ({ onClose, initialTab, notice, notice
           </div>
         )}
 
-        {selectedAgentConfigSource === ExternalAgentConfigSourceValue.LocalCli && (
+        {isClaudeLocalConfigMode && (
+          <div className="rounded-xl border border-border px-3 py-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="text-xs font-medium text-foreground">
+                  {i18nService.t('coworkAgentClaudeLiveConfigTitle')}
+                </div>
+                <div className="mt-1 text-[11px] leading-5 text-secondary">
+                  {i18nService.t('coworkAgentClaudeLiveConfigHint')}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => void loadClaudeLiveConfig()}
+                disabled={claudeLiveConfigLoading}
+                className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:bg-surface-raised disabled:cursor-wait disabled:opacity-50"
+              >
+                {i18nService.t(claudeLiveConfigLoading
+                  ? 'coworkAgentLocalModelRefreshing'
+                  : 'coworkAgentLocalModelRefresh')}
+              </button>
+            </div>
+            {claudeLiveConfig ? (
+              <div className="mt-3 grid gap-1.5 text-[11px] leading-5 text-secondary">
+                <div className="min-w-0">
+                  {i18nService.t('coworkAgentClaudeLiveConfigSource')}:{' '}
+                  <span className="break-all font-mono text-foreground">
+                    {claudeLiveConfig.configPath || claudeLiveConfig.sourceName}
+                  </span>
+                </div>
+                <div>
+                  {i18nService.t('coworkAgentCurrentModelModel')}:{' '}
+                  <span className="font-mono text-foreground">
+                    {claudeLiveConfig.resolvedModel || i18nService.t('coworkAgentClaudeLiveConfigModelDefault')}
+                  </span>
+                  {claudeLiveConfig.model
+                    && claudeLiveConfig.resolvedModel !== claudeLiveConfig.model && (
+                    <span className="text-secondary">
+                      {' '}({i18nService.t('coworkAgentClaudeLiveConfigModelAlias')}: {claudeLiveConfig.model})
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  {i18nService.t('coworkAgentClaudeLiveConfigEndpoint')}:{' '}
+                  <span className="break-all font-mono text-foreground">
+                    {claudeLiveConfig.baseUrl || i18nService.t('coworkAgentClaudeLiveConfigEndpointOfficial')}
+                  </span>
+                </div>
+                <div>
+                  {i18nService.t('coworkAgentClaudeLiveConfigCredential')}:{' '}
+                  <span className="font-mono text-foreground">
+                    {claudeLiveConfig.credentialSource
+                      || i18nService.t(claudeLiveConfig.usesOfficialLogin
+                        ? 'coworkAgentClaudeLiveConfigCredentialOauth'
+                        : 'coworkAgentClaudeLiveConfigCredentialNone')}
+                  </span>
+                </div>
+              </div>
+            ) : (
+              <div className="mt-3 text-[11px] leading-5 text-secondary">
+                {i18nService.t(claudeLiveConfigLoading ? 'loading' : 'coworkAgentClaudeLiveConfigEmpty')}
+              </div>
+            )}
+          </div>
+        )}
+
+        {!isClaudeLocalConfigMode && selectedAgentConfigSource === ExternalAgentConfigSourceValue.LocalCli && (
           <div className="rounded-xl border border-border px-3 py-3">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
