@@ -4,6 +4,11 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { ExternalAgentConfigSource } from '../../shared/cowork/constants';
+import {
+  getClaudeCodeModelFromSettingsConfig,
+  getClaudeConfigDir as resolveClaudeConfigDir,
+} from './claudeCodeLiveConfig';
 import {
   DEFAULT_DEEPSEEK_TUI_MODEL,
   listDeepSeekTuiModelProviders,
@@ -22,7 +27,6 @@ import {
   writeTextFileWithBackupIfChanged,
 } from './externalAgentConfigSync';
 import { type CliAppType } from './externalAgentEnvironment';
-import { getClaudeCodeModelFromSettingsConfig } from './externalAgentLocalEnv';
 import {
   DEFAULT_GROK_BUILD_MODEL,
   mergeGrokBuildDefaultModel,
@@ -132,6 +136,48 @@ const OPENSQUILLA_APP_TYPE: ExternalAgentProviderAppType = 'opensquilla';
 const KIMI_APP_TYPE: ExternalAgentProviderAppType = 'kimi';
 const INTERNAL_META_KEY = '__wesightProviderMeta';
 
+/**
+ * Injected from main.ts so the store can tell whether an app type is currently
+ * set to follow the machine's own CLI config. Defaults to WeSight-managed mode
+ * until wired, which keeps the pre-existing write behaviour.
+ */
+let configSourceGetter: ((appType: ExternalAgentProviderAppType) => ExternalAgentConfigSource) | null = null;
+
+export const setExternalAgentConfigSourceGetter = (
+  getter: (appType: ExternalAgentProviderAppType) => ExternalAgentConfigSource,
+): void => {
+  configSourceGetter = getter;
+};
+
+const getConfigSourceForAppType = (appType: ExternalAgentProviderAppType): ExternalAgentConfigSource => {
+  try {
+    return configSourceGetter?.(appType) ?? ExternalAgentConfigSource.WesightModel;
+  } catch (error) {
+    console.warn('[ExternalAgentProviderStore] could not read the configured source, assuming WeSight-managed:', error);
+    return ExternalAgentConfigSource.WesightModel;
+  }
+};
+
+/**
+ * Claude Code in local-CLI mode is strictly read-only: WeSight follows whatever
+ * `claude` itself would read and never writes back to ~/.claude/settings.json or
+ * the cc-switch database. Other app types keep their existing behaviour, where
+ * switching a provider inside WeSight is still expected to apply to the CLI.
+ */
+const isReadOnlyLocalConfig = (appType: ExternalAgentProviderAppType): boolean => (
+  appType === CLAUDE_APP_TYPE
+  && getConfigSourceForAppType(appType) === ExternalAgentConfigSource.LocalCli
+);
+
+/**
+ * cc-switch only ever managed Claude and Codex. Claude is deliberately excluded:
+ * WeSight reads the machine's own Claude config chain instead, so ~/.cc-switch
+ * is never read from or written to on its behalf.
+ */
+const usesCcSwitchIntegration = (appType: ExternalAgentProviderAppType): boolean => (
+  appType === CODEX_APP_TYPE
+);
+
 const DEFAULT_CLAUDE_MODEL = 'claude-sonnet-4-5';
 const DEFAULT_CODEX_MODEL = 'gpt-5.4';
 const DEFAULT_HERMES_LOCAL_MODEL = DEFAULT_HERMES_MODEL;
@@ -178,12 +224,9 @@ const parseJsonObject = (value: string | null | undefined): Record<string, unkno
   }
 };
 
-const getClaudeConfigDir = (): string => {
-  const settings = readCcSwitchSettings();
-  return normalizePathSetting(settings.claudeConfigDir)
-    ?? normalizePathSetting(settings.claude_config_dir)
-    ?? path.join(homeDir(), '.claude');
-};
+// Claude Code uses its own CLAUDE_CONFIG_DIR; cc-switch's directory override is
+// deliberately not consulted.
+const getClaudeConfigDir = (): string => resolveClaudeConfigDir();
 
 const getCodexConfigDir = (): string => {
   const settings = readCcSwitchSettings();
@@ -878,17 +921,7 @@ export class ExternalAgentProviderStore {
   }
 
   importCcSwitchProviders(appType: ExternalAgentProviderAppType, options: { seedCurrent?: boolean } = {}): number {
-    if (
-      appType === HERMES_APP_TYPE
-      || appType === OPENCLAW_APP_TYPE
-      || appType === OPENCODE_APP_TYPE
-      || appType === GROK_APP_TYPE
-      || appType === QWEN_APP_TYPE
-      || appType === DEEPSEEK_TUI_APP_TYPE
-      || appType === OPENSQUILLA_APP_TYPE
-      || appType === KIMI_APP_TYPE
-      || appType === KIMI_APP_TYPE
-    ) {
+    if (!usesCcSwitchIntegration(appType)) {
       return 0;
     }
     const dbPath = path.join(homeDir(), '.cc-switch', 'cc-switch.db');
@@ -958,20 +991,9 @@ export class ExternalAgentProviderStore {
   }
 
   private getCcSwitchCurrentProviderId(appType: ExternalAgentProviderAppType): string | null {
-    if (
-      appType === HERMES_APP_TYPE
-      || appType === OPENCLAW_APP_TYPE
-      || appType === OPENCODE_APP_TYPE
-      || appType === GROK_APP_TYPE
-      || appType === QWEN_APP_TYPE
-      || appType === DEEPSEEK_TUI_APP_TYPE
-      || appType === OPENSQUILLA_APP_TYPE
-      || appType === KIMI_APP_TYPE
-    ) return null;
+    if (!usesCcSwitchIntegration(appType)) return null;
     const settings = readCcSwitchSettings();
-    const value = appType === CLAUDE_APP_TYPE
-      ? settings.currentProviderClaude ?? settings.current_provider_claude
-      : settings.currentProviderCodex ?? settings.current_provider_codex;
+    const value = settings.currentProviderCodex ?? settings.current_provider_codex;
     return typeof value === 'string' && value.trim() ? value.trim() : null;
   }
 
@@ -1031,15 +1053,7 @@ export class ExternalAgentProviderStore {
   }
 
   private writeCcSwitchCurrentProvider(appType: ExternalAgentProviderAppType, provider: ExternalAgentProvider): void {
-    if (
-      appType === HERMES_APP_TYPE
-      || appType === OPENCODE_APP_TYPE
-      || appType === GROK_APP_TYPE
-      || appType === QWEN_APP_TYPE
-      || appType === DEEPSEEK_TUI_APP_TYPE
-      || appType === OPENSQUILLA_APP_TYPE
-      || appType === KIMI_APP_TYPE
-    ) return;
+    if (!usesCcSwitchIntegration(appType)) return;
     const providerId = this.getCcSwitchProviderId(provider);
     if (!providerId) return;
 
@@ -1047,16 +1061,9 @@ export class ExternalAgentProviderStore {
     const settingsPath = path.join(appDir, 'settings.json');
     const dbPath = path.join(appDir, 'cc-switch.db');
     const settings = readJsonObject(settingsPath) ?? {};
-    if (appType === CLAUDE_APP_TYPE) {
-      settings.currentProviderClaude = providerId;
-      if (Object.prototype.hasOwnProperty.call(settings, 'current_provider_claude')) {
-        settings.current_provider_claude = providerId;
-      }
-    } else {
-      settings.currentProviderCodex = providerId;
-      if (Object.prototype.hasOwnProperty.call(settings, 'current_provider_codex')) {
-        settings.current_provider_codex = providerId;
-      }
+    settings.currentProviderCodex = providerId;
+    if (Object.prototype.hasOwnProperty.call(settings, 'current_provider_codex')) {
+      settings.current_provider_codex = providerId;
     }
     writeJsonFile(settingsPath, settings);
 
@@ -1077,14 +1084,7 @@ export class ExternalAgentProviderStore {
   }
 
   private selectCcSwitchCurrentProvider(appType: ExternalAgentProviderAppType): void {
-    if (
-      appType === HERMES_APP_TYPE
-      || appType === OPENCODE_APP_TYPE
-      || appType === GROK_APP_TYPE
-      || appType === QWEN_APP_TYPE
-      || appType === DEEPSEEK_TUI_APP_TYPE
-      || appType === OPENSQUILLA_APP_TYPE
-    ) return;
+    if (!usesCcSwitchIntegration(appType)) return;
     const currentProviderId = this.getCcSwitchCurrentProviderId(appType);
     const currentProvider = currentProviderId
       ? this.getProvider(appType, `ccswitch-${currentProviderId}`)
@@ -1119,6 +1119,11 @@ export class ExternalAgentProviderStore {
   }
 
   private syncConfiguredProviders(appType: ExternalAgentProviderAppType): void {
+    if (appType === CLAUDE_APP_TYPE) {
+      // WeSight keeps no provider records for Claude Code: the machine's own
+      // settings chain is the single source of truth, read on demand.
+      return;
+    }
     if (appType === OPENCODE_APP_TYPE) {
       this.syncOpenCodeLiveProviders();
       return;
@@ -1591,6 +1596,12 @@ export class ExternalAgentProviderStore {
   }
 
   private applyProviderToLive(provider: ExternalAgentProvider): void {
+    if (isReadOnlyLocalConfig(provider.appType)) {
+      console.debug(
+        `[ExternalAgentProviderStore] skipped writing live ${provider.appType} config because it follows the local CLI.`,
+      );
+      return;
+    }
     const settingsConfig = this.stripInternalSettingsConfig(provider.settingsConfig);
     this.writeCcSwitchCurrentProvider(provider.appType, provider);
     if (provider.appType === CLAUDE_APP_TYPE) {

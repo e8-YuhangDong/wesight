@@ -25,6 +25,7 @@ import {
   upsertLiveFileActivity,
 } from '../store/slices/coworkSlice';
 import type {
+  ClaudeCodeLiveConfigResult,
   CoworkApiConfig,
   CoworkConfigUpdate,
   CoworkContinueOptions,
@@ -919,6 +920,12 @@ class CoworkService {
     const api = window.electron?.cowork?.importLiveAgentProvider;
     if (!api) return { success: false, error: 'Cowork provider API not available' };
     return api(appType);
+  }
+
+  async getClaudeCodeLiveConfig(cwd?: string): Promise<ClaudeCodeLiveConfigResult> {
+    const api = window.electron?.cowork?.getClaudeCodeLiveConfig;
+    if (!api) return { success: false, error: 'Claude Code local config API not available' };
+    return api(cwd ? { cwd } : {});
   }
 
   async importLocalAgentConfigToModelSettings(appType: ExternalAgentProviderAppType): Promise<ExternalAgentModelImportResult> {

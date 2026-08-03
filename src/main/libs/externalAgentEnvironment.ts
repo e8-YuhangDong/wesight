@@ -8,6 +8,7 @@ import {
   type CliCoworkAgentEngine,
   CoworkAgentEngine,
 } from '../../shared/cowork/constants';
+import { getClaudeConfigDir } from './claudeCodeLiveConfig';
 import { resolveUserShellPath } from './coworkUtil';
 import {
   listDeepSeekTuiModelProviders,
@@ -986,10 +987,11 @@ const buildCliConfigSnapshot = (
   settings: CcSwitchSettings,
   dbPath: string,
 ): CliAppConfigSnapshot => {
-  const claudeOverride = getConfigDirSetting(settings, 'claude');
+  // Claude Code no longer follows cc-switch's directory override: it uses its
+  // own CLAUDE_CONFIG_DIR, the same thing the CLI honours in a terminal.
   const codexOverride = getConfigDirSetting(settings, 'codex');
   const configDir = appType === 'claude'
-    ? claudeOverride ?? path.join(homeDir(), '.claude')
+    ? getClaudeConfigDir()
     : appType === 'codex'
       ? codexOverride ?? path.join(homeDir(), '.codex')
       : appType === 'hermes'
@@ -1029,7 +1031,7 @@ const buildCliConfigSnapshot = (
               ? path.join(configDir, 'config.toml')
               : path.join(configDir, 'config.toml');
   const secondaryConfigPaths = appType === 'claude'
-    ? [resolveClaudeMcpPath(configDir, Boolean(claudeOverride))]
+    ? [resolveClaudeMcpPath(configDir, Boolean(process.env.CLAUDE_CONFIG_DIR?.trim()))]
     : appType === 'codex'
       ? [path.join(configDir, 'auth.json')]
     : appType === 'hermes'

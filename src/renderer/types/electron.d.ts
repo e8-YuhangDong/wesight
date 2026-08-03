@@ -292,6 +292,24 @@ interface ExternalAgentProviderInput {
   setCurrent?: boolean;
 }
 
+interface ClaudeCodeLiveConfigSnapshot {
+  sourceName: string;
+  sourceScope: string | null;
+  configPath: string;
+  contributingPaths: string[];
+  model: string;
+  resolvedModel: string;
+  baseUrl: string;
+  credentialSource: string | null;
+  usesOfficialLogin: boolean;
+}
+
+interface ClaudeCodeLiveConfigResult {
+  success: boolean;
+  snapshot?: ClaudeCodeLiveConfigSnapshot | null;
+  error?: string;
+}
+
 interface ExternalAgentProviderListResult {
   success: boolean;
   appType?: ExternalAgentProviderAppType;
@@ -755,6 +773,7 @@ interface IElectronAPI {
     deleteAgentProvider: (input: { appType: ExternalAgentProviderAppType; id: string }) => Promise<ExternalAgentProviderListResult>;
     setCurrentAgentProvider: (input: { appType: ExternalAgentProviderAppType; id: string }) => Promise<ExternalAgentProviderListResult>;
     importLiveAgentProvider: (appType: ExternalAgentProviderAppType) => Promise<ExternalAgentProviderListResult>;
+    getClaudeCodeLiveConfig: (input?: { cwd?: string }) => Promise<ClaudeCodeLiveConfigResult>;
     importLocalAgentConfigToModelSettings: (appType: ExternalAgentProviderAppType) => Promise<ExternalAgentModelImportResult>;
     syncOpenClawGlobalConfig: () => Promise<{ success: boolean; changed?: boolean; status?: OpenClawEngineStatus; error?: string }>;
     syncOpenCodeGlobalConfig: () => Promise<ExternalAgentProviderListResult>;

@@ -430,6 +430,25 @@ export interface ExternalAgentProviderInput {
   setCurrent?: boolean;
 }
 
+/** The Claude Code config actually in effect on this machine — read-only. */
+export interface ClaudeCodeLiveConfigSnapshot {
+  sourceName: string;
+  sourceScope: string | null;
+  configPath: string;
+  contributingPaths: string[];
+  model: string;
+  resolvedModel: string;
+  baseUrl: string;
+  credentialSource: string | null;
+  usesOfficialLogin: boolean;
+}
+
+export interface ClaudeCodeLiveConfigResult {
+  success: boolean;
+  snapshot?: ClaudeCodeLiveConfigSnapshot | null;
+  error?: string;
+}
+
 export interface ExternalAgentProviderListResult {
   success: boolean;
   appType?: ExternalAgentProviderAppType;
