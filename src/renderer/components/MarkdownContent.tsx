@@ -749,7 +749,7 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
   const hiddenLineCount = shouldCollapseMarkdown ? getHiddenLineCount(content, visibleContent) : 0;
   const normalizedContent = useMemo(() => normalizeDisplayMath(encodeFileUrlsInMarkdown(visibleContent)), [visibleContent]);
   return (
-    <div className={`markdown-content text-[15px] leading-6 ${className}`}>
+    <div className={`markdown-content text-[15px] leading-6 select-text ${className}`}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex]}

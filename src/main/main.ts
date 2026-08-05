@@ -2,7 +2,7 @@ import type { PermissionResult } from '@anthropic-ai/claude-agent-sdk';
 import { spawnSync } from 'child_process';
 import { randomBytes } from 'crypto';
 import type { WebContents } from 'electron';
-import { app, BrowserWindow, dialog, ipcMain, Menu, nativeImage, nativeTheme, net, powerMonitor, powerSaveBlocker,protocol, screen, session, shell } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, Menu, MenuItem, nativeImage, nativeTheme, net, powerMonitor, powerSaveBlocker,protocol, screen, session, shell } from 'electron';
 import fs from 'fs';
 import * as http from 'http';
 import type { AddressInfo } from 'net';
@@ -7889,6 +7889,26 @@ if (!gotTheLock) {
     // 禁用窗口菜单
     mainWindow.setMenu(null);
     markTiming('window_created_ms', windowCreateStartedAt);
+
+    // 右键上下文菜单：复制选中文本/输入框剪切粘贴等
+    mainWindow.webContents.on('context-menu', (event, params) => {
+      const menu = new Menu();
+      if (params.editFlags.canCut) {
+        menu.append(new MenuItem({ label: '剪切', role: 'cut' }));
+      }
+      if (params.editFlags.canCopy) {
+        menu.append(new MenuItem({ label: '复制', role: 'copy' }));
+      }
+      if (params.editFlags.canPaste) {
+        menu.append(new MenuItem({ label: '粘贴', role: 'paste' }));
+      }
+      if (params.editFlags.canSelectAll) {
+        menu.append(new MenuItem({ label: '全选', role: 'selectAll' }));
+      }
+      if (menu.items.length > 0) {
+        menu.popup({ window: mainWindow });
+      }
+    });
 
     // 处理 window.open 请求（企微 SDK 授权弹窗等）
     mainWindow.webContents.setWindowOpenHandler(({ url }) => {
