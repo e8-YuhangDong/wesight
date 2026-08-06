@@ -32,10 +32,7 @@ export const getSkillStoreUrl = () => isTestMode()
   : `${WESIGHT_API_BASE_URL}/api/skills/store`;
 
 // Portal 页面
-const PORTAL_BASE_TEST = 'https://wesight.ai';
-const PORTAL_BASE_PROD = 'https://wesight.ai';
+const BILLING_BASE_URL = 'https://pay.wesight.ai';
 
-const getPortalBase = () => isTestMode() ? PORTAL_BASE_TEST : PORTAL_BASE_PROD;
-
-export const getPortalPricingUrl = () => `${getPortalBase()}/pricing`;
-export const getPortalProfileUrl = () => `${getPortalBase()}/profile`;
+export const getPortalPricingUrl = () => `${BILLING_BASE_URL}/billing?source=desktop`;
+export const getPortalProfileUrl = () => `${BILLING_BASE_URL}/account?source=desktop`;
