@@ -6,6 +6,10 @@ on:
     tags:
       - 'v*'
 
+concurrency:
+  group: build-platforms-${{ github.ref }}
+  cancel-in-progress: false
+
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
   NODE_OPTIONS: --max-old-space-size=6144
@@ -14,9 +18,49 @@ permissions:
   contents: write
 
 jobs:
-  # ========== macOS Apple Silicon 构建 ==========
-  build-macos-arm64:
-    runs-on: macos-latest
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      prerelease: ${{ steps.metadata.outputs.prerelease }}
+      tag: ${{ steps.metadata.outputs.tag }}
+      version: ${{ steps.metadata.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve release version
+        id: metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            node scripts/release-metadata.cjs --tag "$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+          else
+            node scripts/release-metadata.cjs >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Show build metadata
+        env:
+          RELEASE_TAG: ${{ steps.metadata.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.metadata.outputs.version }}
+        run: |
+          echo "Release version: $RELEASE_VERSION"
+          echo "Release tag: $RELEASE_TAG"
+
+  build-macos:
+    needs: prepare
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            artifact: macos-arm64-build
+            runner: macos-latest
+            runner_arch: arm64
+          - arch: x64
+            artifact: macos-x64-build
+            runner: macos-15-intel
+            runner_arch: x86_64
+    runs-on: ${{ matrix.runner }}
     env:
       APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_PWD }}
       APPLE_ID: ${{ secrets.APPLE_ID }}
@@ -24,110 +68,159 @@ jobs:
       CSC_IDENTITY_AUTO_DISCOVERY: true
       CSC_KEY_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
       CSC_LINK: ${{ secrets.MACOS_CERTIFICATE }}
+      WESIGHT_RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
       WESIGHT_REQUIRE_APPLE_NOTARIZATION: true
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '24.x'
+
       - uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: npm-${{ runner.os }}-${{ hashFiles('package.json') }}
-          restore-keys: npm-${{ runner.os }}-
+          key: npm-${{ runner.os }}-${{ matrix.arch }}-${{ hashFiles('package.json') }}
+          restore-keys: npm-${{ runner.os }}-${{ matrix.arch }}-
 
-      - run: npm install
+      - name: Install dependencies
+        run: npm install
 
-      - name: Verify Apple Silicon runner
+      - name: Verify runner architecture
+        env:
+          EXPECTED_NODE_ARCH: ${{ matrix.arch }}
+          EXPECTED_RUNNER_ARCH: ${{ matrix.runner_arch }}
         run: |
-          test "$(uname -m)" = "arm64"
-          node -e "if (process.arch !== 'arm64') process.exit(1)"
+          test "$(uname -m)" = "$EXPECTED_RUNNER_ARCH"
+          node -e "if (process.arch !== process.env.EXPECTED_NODE_ARCH) process.exit(1)"
 
-      - name: Build macOS arm64
-        run: npm run dist:mac:arm64 -- --publish never -c.forceCodeSigning=true
+      - name: Build macOS ${{ matrix.arch }}
+        run: npm run dist:mac:${{ matrix.arch }} -- --publish never -c.forceCodeSigning=true
 
-      - name: Verify macOS arm64 artifact
-        run: npm run verify:mac:arm64-artifact
+      - name: Verify macOS ${{ matrix.arch }} artifact
+        run: npm run verify:mac:${{ matrix.arch }}-artifact
 
       - uses: actions/upload-artifact@v4
         with:
-          name: macos-arm64-build
-          path: release/*.dmg
+          name: ${{ matrix.artifact }}
+          path: release/WeSight.${{ needs.prepare.outputs.version }}.mac.${{ matrix.arch }}.dmg
+          if-no-files-found: error
           retention-days: 7
 
-  # ========== macOS Intel 构建 ==========
-  build-macos-x64:
-    runs-on: macos-15-intel
+  build-windows:
+    needs: prepare
+    runs-on: windows-latest
     env:
-      APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_PWD }}
-      APPLE_ID: ${{ secrets.APPLE_ID }}
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-      CSC_IDENTITY_AUTO_DISCOVERY: true
-      CSC_KEY_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
-      CSC_LINK: ${{ secrets.MACOS_CERTIFICATE }}
-      WESIGHT_REQUIRE_APPLE_NOTARIZATION: true
+      CSC_IDENTITY_AUTO_DISCOVERY: false
+      WESIGHT_RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '24.x'
+
       - uses: actions/cache@v4
         with:
           path: ~/.npm
           key: npm-${{ runner.os }}-x64-${{ hashFiles('package.json') }}
           restore-keys: npm-${{ runner.os }}-x64-
 
-      - run: npm install
+      - name: Install dependencies
+        run: npm install
 
-      - name: Verify Intel runner
-        run: |
-          test "$(uname -m)" = "x86_64"
-          node -e "if (process.arch !== 'x64') process.exit(1)"
+      - name: Build Windows x64 installer
+        run: npm run dist:win -- --publish never
 
-      - name: Build macOS x64
-        run: npm run dist:mac:x64 -- --publish never -c.forceCodeSigning=true
-
-      - name: Verify macOS x64 artifact
-        run: npm run verify:mac:x64-artifact
+      - name: Verify Windows x64 artifact
+        run: npm run verify:win:x64-artifact
 
       - uses: actions/upload-artifact@v4
         with:
-          name: macos-x64-build
-          path: release/*.dmg
+          name: windows-x64-build
+          path: |
+            release/WeSight.Setup.${{ needs.prepare.outputs.version }}.exe
+            release/WeSight.Setup.${{ needs.prepare.outputs.version }}.exe.blockmap
+            release/latest.yml
+          if-no-files-found: error
           retention-days: 7
 
-  # ========== 创建 Release ==========
   create-release:
-    needs: [build-macos-arm64, build-macos-x64]
-    runs-on: ubuntu-latest
+    needs:
+      - prepare
+      - build-macos
+      - build-windows
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download All Artifacts
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           path: artifacts
 
-      - name: Create Draft Release
+      - name: Collect release assets and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p release-assets
+          cp artifacts/macos-arm64-build/*.dmg release-assets/
+          cp artifacts/macos-x64-build/*.dmg release-assets/
+          cp artifacts/windows-x64-build/*.exe release-assets/
+          cp artifacts/windows-x64-build/*.blockmap release-assets/
+          cp artifacts/windows-x64-build/latest.yml release-assets/
+
+          (
+            cd release-assets
+            find . -maxdepth 1 -type f -print0 \
+              | sort -z \
+              | xargs -0 sha256sum \
+              | sed 's#  \\./#  #' > ../SHASUMS256.txt
+            mv ../SHASUMS256.txt SHASUMS256.txt
+          )
+
+      - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ github.ref_name }}
+          IS_PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
+          TAG_NAME: ${{ needs.prepare.outputs.tag }}
+        shell: bash
         run: |
           set -euo pipefail
 
-          args=(
-            "$TAG_NAME"
-            artifacts/macos-arm64-build/*.dmg
-            artifacts/macos-x64-build/*.dmg
-            --draft
-            --generate-notes
-            --title "$TAG_NAME"
+          node scripts/render-release-notes.cjs "$TAG_NAME" release-notes.md
+
+          release_args=(
             --repo "$GITHUB_REPOSITORY"
+            --title "$TAG_NAME"
+            --verify-tag
           )
 
-          if [[ "$TAG_NAME" == *"-alpha"* || "$TAG_NAME" == *"-beta"* || "$TAG_NAME" == *"-rc"* ]]; then
-            args+=(--prerelease)
+          if [[ "$IS_PRERELEASE" == "true" ]]; then
+            release_args+=(--prerelease)
+          else
+            release_args+=(--latest)
           fi
 
-          gh release create "${args[@]}"
+          if gh release view "$TAG_NAME" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload \
+              "$TAG_NAME" \
+              release-assets/* \
+              --clobber \
+              --repo "$GITHUB_REPOSITORY"
+            gh release edit \
+              "$TAG_NAME" \
+              "${release_args[@]}" \
+              --draft=false \
+              --prerelease="$IS_PRERELEASE" \
+              --notes-file release-notes.md
+          else
+            if [[ "$IS_PRERELEASE" == "true" ]]; then
+              release_args+=(--latest=false)
+            fi
+            gh release create \
+              "$TAG_NAME" \
+              release-assets/* \
+              "${release_args[@]}" \
+              --notes-file release-notes.md
+          fi

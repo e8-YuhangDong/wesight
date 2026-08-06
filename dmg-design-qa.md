@@ -9,8 +9,8 @@ final result: passed
 - Full-view comparison: `docs/design-assets/wesight-dmg-design-comparison.png`
 - Initial failed implementation: `docs/design-assets/wesight-dmg-finder-attempt-1.jpg`
 - DMG background assets: `build/dmg-background.png` and `build/dmg-background@2x.png`
-- Packaged artifact used for QA: `/private/tmp/wesight-dmg-semver.utRLlv/WeSight.2026.07.28.mac.arm64.dmg`
-- Finder state: mounted `WeSight Installer 1.0.1` DMG, icon view, macOS dark appearance, no item selected
+- Packaged artifact used for QA: `release/WeSight.1.0.2.mac.arm64.dmg`
+- Finder state: mounted `WeSight Installer 1.0.2` DMG, icon view, macOS dark appearance, no item selected
 
 ## Viewport And Density
 
@@ -28,7 +28,7 @@ final result: passed
 - Colors and visual tokens: the teal forest palette, warm sunrise highlight, cream display text, glass panel, and gold installation arrow remain consistent with the selected concept.
 - Image quality and asset fidelity: the packaged DMG includes a two-resolution TIFF generated from 793 × 496 and 1586 × 992 source assets. The mounted Finder background is sharp and complete.
 - Copy and content: “WeSight”, “本机 AI Agent 桌面工作台”, and “拖动安装” match the selected concept. Finder hides the `.app` extension and displays `WeSight`, which follows native macOS behavior.
-- Version presentation: the mounted Finder window uses the pure numeric `1.0.1` version in its volume title.
+- Version presentation: the mounted Finder window uses the pure numeric `1.0.2` version in its volume title.
 - Native platform variance: the selected concept uses a light title bar while the QA machine uses macOS dark appearance. Finder owns this chrome and switches it with the user’s system appearance.
 - P3 follow-up: the visible WeSight artwork is slightly smaller than the concept because the production `.icns` includes standard macOS icon padding. The current result keeps the Applications icon at the intended scale and preserves balanced spacing.
 
