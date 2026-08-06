@@ -54,3 +54,13 @@ sandbox/
 **/**/post-commit
 openspec/
 .superpowers/
+
+# Local agent runtime artifacts and private memory files
+.opensquilla/
+.tmp/
+memory/
+HEARTBEAT.md
+MEMORY.md
+SOUL.md
+TOOLS.md
+USER.md
