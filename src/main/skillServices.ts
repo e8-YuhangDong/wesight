@@ -10,6 +10,7 @@ import path from 'path';
 import { cpRecursiveSync } from './fsCompat';
 import { getElectronNodeRuntimePath, resolveUserShellPath } from './libs/coworkUtil';
 import { appendPythonRuntimeToEnv } from './libs/pythonRuntime';
+import { prependWesightSharedRuntimeBin } from './libs/wesightSharedRuntime';
 
 /**
  * Build an environment for spawning skill service scripts.
@@ -46,6 +47,7 @@ function buildSkillServiceEnv(): Record<string, string | undefined> {
   // even when system Node.js is not installed.
   env.WESIGHT_ELECTRON_PATH = electronNodeRuntimePath;
   appendPythonRuntimeToEnv(env);
+  prependWesightSharedRuntimeBin(env, app.getPath('home'));
 
   return env;
 }

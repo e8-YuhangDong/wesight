@@ -24,6 +24,7 @@ import {
 import type { OpenAICompatProxyTarget } from './coworkOpenAICompatProxy';
 import { appendPythonRuntimeToEnv } from './pythonRuntime';
 import { isSystemProxyEnabled, resolveSystemProxyUrl } from './systemProxy';
+import { prependWesightSharedRuntimeBin } from './wesightSharedRuntime';
 
 function appendEnvPath(current: string | undefined, additions: string[]): string | undefined {
   const items = new Set<string>();
@@ -1394,6 +1395,7 @@ export async function getEnhancedEnv(
   }
 
   applyPackagedEnvOverrides(env);
+  prependWesightSharedRuntimeBin(env, app.getPath('home'));
 
   // Inject SKILLs directory path for skill scripts.
   // On Windows, normalise backslashes to forward slashes so the value is usable

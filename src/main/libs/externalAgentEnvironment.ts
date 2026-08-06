@@ -24,6 +24,7 @@ import {
   parseHermesDotenvText,
 } from './hermesConfig';
 import { readOpenClawGlobalConfig, summarizeOpenClawConfig } from './openclawSystemRuntime';
+import { getWesightLarkCliBinDir } from './wesightSharedRuntime';
 
 export type CliAppType = 'claude' | 'codex' | 'hermes' | 'openclaw' | 'opencode' | 'grok' | 'qwen' | 'deepseek_tui' | 'opensquilla' | 'kimi';
 export type CliAuthStatus = 'unknown' | 'logged_out' | 'logged_in' | 'expired' | 'unconfigured';
@@ -788,6 +789,7 @@ const buildProbeEnv = (
 ): NodeJS.ProcessEnv => {
   const pathEntries = [
     process.env.PATH ?? '',
+    getWesightLarkCliBinDir(process.env, homeDir()),
     path.join(homeDir(), '.npm-global', 'bin'),
     path.join(homeDir(), '.local', 'bin'),
     getKimiCodeBinDir(),

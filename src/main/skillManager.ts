@@ -13,6 +13,10 @@ import { getElectronNodeRuntimePath, resolveUserShellPath } from './libs/coworkU
 import { appendPythonRuntimeToEnv } from './libs/pythonRuntime';
 import { mergeReports,scanMultipleSkillDirs, scanSkillSecurity } from './libs/skillSecurity/skillSecurityScanner';
 import type { SecurityReportAction,SkillSecurityReport } from './libs/skillSecurity/skillSecurityTypes';
+import {
+  getSharedAgentSkillsRoot,
+  prependWesightSharedRuntimeBin,
+} from './libs/wesightSharedRuntime';
 import type {
   SkillHubMarketplaceOptions,
   SkillHubMarketplaceResult,
@@ -181,6 +185,7 @@ function buildSkillEnv(): Record<string, string | undefined> {
   // even when system Node.js is not installed.
   env.WESIGHT_ELECTRON_PATH = getElectronNodeRuntimePath();
   appendPythonRuntimeToEnv(env);
+  prependWesightSharedRuntimeBin(env, app.getPath('home'));
 
   // Re-normalize after appendPythonRuntimeToEnv may have added a PATH key
   normalizePathKey(env);
@@ -2280,6 +2285,11 @@ export class SkillManager {
     const claudeSkillsRoot = this.getClaudeSkillsRoot();
     if (claudeSkillsRoot && fs.existsSync(claudeSkillsRoot)) {
       roots.push(claudeSkillsRoot);
+    }
+
+    const sharedAgentSkillsRoot = getSharedAgentSkillsRoot(app.getPath('home'));
+    if (fs.existsSync(sharedAgentSkillsRoot)) {
+      roots.push(sharedAgentSkillsRoot);
     }
 
     const appRoot = this.getBundledSkillsRoot();
